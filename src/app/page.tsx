@@ -7,6 +7,7 @@ import LiveCounter from "@/components/LiveCounter";
 import TrySampleButton from "@/components/TrySampleButton";
 import MemePreview from "@/components/MemePreview";
 import RotatingText from "@/components/RotatingText";
+import BawaWidget from "@/components/BawaWidget";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
 const HERO_TAGLINES = [
@@ -282,6 +283,8 @@ export default function Home() {
       </footer>
 
       </div>
+
+      <BawaWidget />
     </main>
   );
 }

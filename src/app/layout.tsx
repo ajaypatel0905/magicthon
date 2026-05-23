@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Space_Grotesk, JetBrains_Mono } from "next/font/google";
-import BawaWidget from "@/components/BawaWidget";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -45,10 +44,7 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <BawaWidget />
-      </body>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
