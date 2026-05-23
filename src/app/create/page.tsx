@@ -17,7 +17,25 @@ type SuggestResponse = {
   suggestions: Suggestion[];
 };
 
+const CACHE_KEY = "magicthon:suggest:cache";
+
+type CacheEntry = { photo: string; data: SuggestResponse };
+
+function readCache(): CacheEntry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as CacheEntry;
+  } catch {
+    return null;
+  }
+}
+
 export default function CreatePage() {
+  // `hydrated` blocks the NoPhoto flash on remount. We only know if there's a
+  // photo after the first client paint reads sessionStorage.
+  const [hydrated, setHydrated] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [data, setData] = useState<SuggestResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,12 +43,23 @@ export default function CreatePage() {
   const [picked, setPicked] = useState<number | null>(null);
 
   useEffect(() => {
+    const p = sessionStorage.getItem("magicthon:upload");
+    const cached = readCache();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPhoto(sessionStorage.getItem("magicthon:upload"));
+    setPhoto(p);
+    if (p && cached && cached.photo === p) {
+      setData(cached.data);
+    }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!photo) return;
+    // Skip the LLM call if we already have suggestions cached for this exact photo.
+    const cached = readCache();
+    if (cached?.photo === photo && cached.data) {
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -47,6 +76,14 @@ export default function CreatePage() {
           setError(json.error ?? "couldn't write any memes — try again");
         } else {
           setData(json as SuggestResponse);
+          try {
+            sessionStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ photo, data: json }),
+            );
+          } catch {
+            /* quota or serialization — fine to ignore */
+          }
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "network error");
@@ -77,8 +114,19 @@ export default function CreatePage() {
           </p>
         )}
 
-        {!photo && !error && (
+        {hydrated && !photo && !error && (
           <NoPhoto />
+        )}
+
+        {!hydrated && (
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, n) => (
+              <div
+                key={n}
+                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] animate-pulse"
+              />
+            ))}
+          </div>
         )}
 
         {photo && error && (

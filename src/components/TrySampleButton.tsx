@@ -23,6 +23,7 @@ export default function TrySampleButton() {
       reader.onload = () => {
         sessionStorage.setItem("magicthon:upload", reader.result as string);
         sessionStorage.setItem("magicthon:upload:name", "sample.jpg");
+        sessionStorage.removeItem("magicthon:suggest:cache");
         router.push("/create");
       };
       reader.readAsDataURL(blob);

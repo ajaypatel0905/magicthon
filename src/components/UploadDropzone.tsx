@@ -37,6 +37,8 @@ export default function UploadDropzone() {
         const dataUrl = await fileToDataURL(file);
         sessionStorage.setItem("magicthon:upload", dataUrl);
         sessionStorage.setItem("magicthon:upload:name", file.name);
+        // Different photo = different suggestions. Drop the old cache.
+        sessionStorage.removeItem("magicthon:suggest:cache");
         router.push("/create");
       } catch {
         setError("Couldn't read that file. Try another.");
