@@ -75,7 +75,6 @@ export default function TextPage() {
         }
         sessionStorage.removeItem("mt:back-restore");
       } else if (stateMaybe && typeof stateMaybe.mt_picked === "number") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPicked(stateMaybe.mt_picked);
       }
     }
