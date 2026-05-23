@@ -256,7 +256,8 @@ export default function MemeEditor({
     function move(ev: PointerEvent) {
       const dxPx = ev.clientX - startX;
       const dyPx = ev.clientY - startY;
-      if (!didDrag && Math.hypot(dxPx, dyPx) < 5) return;
+      // 8px slop — finger wobble doesn't accidentally trigger drag.
+      if (!didDrag && Math.hypot(dxPx, dyPx) < 8) return;
       if (!draggable) return; // Only impact templates support drag; tap still focuses input.
       if (!didDrag) {
         didDrag = true;
@@ -423,7 +424,7 @@ export default function MemeEditor({
                     }
                     rows={2}
                     maxLength={(slot.maxChars ?? 200) + 30}
-                    className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
+                    className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-base text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
                   />
                 ) : (
                   <input
@@ -435,7 +436,7 @@ export default function MemeEditor({
                       setCaptions((c) => ({ ...c, [slot.key]: e.target.value }))
                     }
                     maxLength={(slot.maxChars ?? 200) + 30}
-                    className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
+                    className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-base text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
                   />
                 )}
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">

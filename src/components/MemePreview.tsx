@@ -326,7 +326,7 @@ function Frame({
 
 // Hosts we trust to load fast. For these, render the <img> directly with no
 // shimmer — eliminates the "loading" feel on the landing page and wall.
-const FAST_HOSTS = ["images.unsplash.com", "supabase.co"];
+const FAST_HOSTS = ["images.unsplash.com", "supabase.co", "upload.wikimedia.org"];
 
 function isFastUrl(src: string): boolean {
   return FAST_HOSTS.some((h) => src.includes(h));

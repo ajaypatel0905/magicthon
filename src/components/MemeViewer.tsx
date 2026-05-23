@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
+import ShareMenu from "@/components/ShareMenu";
 import { supabaseBrowser } from "@/lib/supabase";
 import type { Template } from "@/lib/templates";
 
@@ -28,7 +29,6 @@ export default function MemeViewer({
 }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(initialCounts);
   const [busy, setBusy] = useState<string | null>(null);
-  const [shareCopied, setShareCopied] = useState(false);
   const lastReactRef = useRef<{ emoji: string; t: number } | null>(null);
 
   useEffect(() => {
@@ -89,17 +89,6 @@ export default function MemeViewer({
     }
   }
 
-  async function copyLink() {
-    const url = `${window.location.origin}/m/${code}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 1500);
-    } catch {
-      // ignore
-    }
-  }
-
   return (
     <div className="mt-3">
       <MemePreview
@@ -126,12 +115,9 @@ export default function MemeViewer({
 
         <div className="flex-1" />
 
-        <button
-          onClick={copyLink}
-          className="rounded-full bg-acid text-ink px-4 py-1.5 text-sm font-[family-name:var(--font-mono)] font-bold uppercase tracking-widest"
-        >
-          {shareCopied ? "copied ✓" : "share"}
-        </button>
+        <ShareMenu
+          url={typeof window !== "undefined" ? `${window.location.origin}/m/${code}` : `/m/${code}`}
+        />
       </div>
     </div>
   );

@@ -52,9 +52,11 @@ const SECTION_MEMES = {
     captions: { bottom: "people are making memes RIGHT NOW. live." },
   },
   cta: {
-    photo: "https://images.unsplash.com/photo-1573497019418-b400bb3ab074?w=600&q=85",
-    template_id: "motivational",
-    captions: { title: "YOUR TURN", subtitle: "drop a photo. we'll cook." },
+    // Official White House portrait — public domain.
+    photo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/640px-Donald_Trump_official_portrait.jpg",
+    template_id: "top-bottom-impact",
+    captions: { top: "YOUR TURN", bottom: "DROP A PHOTO, WE'LL COOK" },
   },
 } as const;
 
@@ -116,7 +118,7 @@ export default function Home() {
               <RotatingText lines={HERO_EYEBROWS} intervalMs={4200} />
             </div>
             <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.84] tracking-tighter text-[clamp(64px,16vw,180px)]">
-              make it
+              Make it
               <br />a <span className="text-acid">meme</span>.
             </h1>
             <p className="font-[family-name:var(--font-display)] font-medium leading-[0.96] tracking-tight text-[clamp(20px,4.5vw,32px)] mt-6 mb-6 text-paper/85 min-h-[2.5em]">
@@ -174,26 +176,26 @@ export default function Home() {
       <section className="px-4 py-16 sm:py-24 border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto">
           <SectionMeme kind="diff" className="mb-12" />
-          <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
-            <div className="rounded-lg border border-[var(--line)] p-5 bg-ink-2/40">
+          <div className="grid sm:grid-cols-2 gap-0 border-t border-[var(--line)]">
+            <div className="border-b sm:border-r border-[var(--line)] p-5">
               <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/50 mb-3">
                 them
               </div>
-              <ul className="space-y-2 text-paper/65 text-[15px] leading-relaxed">
+              <ul className="space-y-1.5 text-paper/55 text-[15px] leading-relaxed">
                 <li>impact font, two text boxes</li>
                 <li>templates that ignore your photo</li>
                 <li>watermark on the bottom-right</li>
                 <li>signup wall for ‟social features”</li>
-                <li>captions that fit literally any photo</li>
+                <li>captions that fit any photo</li>
               </ul>
             </div>
-            <div className="rounded-lg border border-acid/40 p-5 bg-[rgba(198,242,78,0.04)]">
+            <div className="border-b border-[var(--line)] p-5">
               <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-acid mb-3">
                 us
               </div>
-              <ul className="space-y-2 text-paper/90 text-[15px] leading-relaxed">
+              <ul className="space-y-1.5 text-paper/90 text-[15px] leading-relaxed">
                 <li>a vision model that <em className="not-italic text-acid">looks</em></li>
-                <li>six photo-specific ideas across six templates</li>
+                <li>six photo-specific ideas, six templates</li>
                 <li>tactile editor — fonts, layouts, your call</li>
                 <li>no signup. no watermark. no app.</li>
                 <li>realtime reactions on every share link</li>
@@ -227,7 +229,7 @@ export default function Home() {
       {/* THE FLOW — visual recipe, less text */}
       <section className="px-4 py-16 sm:py-20 border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto">
-          <div className="font-[family-name:var(--font-mono)] text-[12px] text-acid tracking-widest mb-3">
+          <div className="font-[family-name:var(--font-mono)] text-[12px] text-acid uppercase tracking-widest mb-3">
             the loop
           </div>
           <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(32px,6vw,64px)] mb-10">
