@@ -18,17 +18,32 @@ function slotStyle(positions: Props["positions"], key: string): React.CSSPropert
   return { transform: `translateY(${p.dy}%)` };
 }
 
-// Impact-style outlined caption used by classic memes
+// Impact-style outlined caption used by classic memes.
+// Size scales down as text gets longer so it never spills outside the frame.
 function ImpactText({
   text,
+  big = false,
   className = "",
 }: {
   text: string;
+  big?: boolean;
   className?: string;
 }) {
+  const len = text.length;
+  const size = big
+    ? len > 80
+      ? "text-[clamp(14px,4cqw,26px)]"
+      : len > 50
+        ? "text-[clamp(16px,5cqw,32px)]"
+        : "text-[clamp(20px,6cqw,44px)]"
+    : len > 80
+      ? "text-[clamp(12px,3.4cqw,22px)]"
+      : len > 50
+        ? "text-[clamp(14px,4.2cqw,28px)]"
+        : "text-[clamp(18px,5.5cqw,40px)]";
   return (
     <span
-      className={`font-[family-name:var(--font-display)] font-extrabold uppercase leading-[0.95] text-white text-center [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000,_0_0_18px_rgba(0,0,0,.55)] ${className}`}
+      className={`font-[family-name:var(--font-display)] font-extrabold uppercase leading-[0.95] text-white text-center break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000,_0_0_18px_rgba(0,0,0,.55)] ${size} ${className}`}
     >
       {text}
     </span>
@@ -50,6 +65,9 @@ export default function MemePreview({
     return out;
   }, [template, captions]);
 
+  const isTextMode =
+    photo.startsWith("linear-gradient") || photo.startsWith("radial-gradient");
+
   switch (template.id) {
     case "top-bottom-impact":
       return (
@@ -60,14 +78,14 @@ export default function MemePreview({
             style={slotStyle(positions, "top")}
             className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 touch-none"
           >
-            <ImpactText text={c.top} className="text-[clamp(18px,5.5cqw,40px)] max-w-[95%]" />
+            <ImpactText text={c.top} className="max-w-[95%]" />
           </div>
           <div
             data-slot="bottom"
             style={slotStyle(positions, "bottom")}
             className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-3 touch-none"
           >
-            <ImpactText text={c.bottom} className="text-[clamp(18px,5.5cqw,40px)] max-w-[95%]" />
+            <ImpactText text={c.bottom} className="max-w-[95%]" />
           </div>
         </Frame>
       );
@@ -81,7 +99,7 @@ export default function MemePreview({
             style={slotStyle(positions, "bottom")}
             className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-4 touch-none"
           >
-            <ImpactText text={c.bottom} className="text-[clamp(20px,6cqw,44px)] max-w-[95%]" />
+            <ImpactText text={c.bottom} big className="max-w-[95%]" />
           </div>
         </Frame>
       );
@@ -102,14 +120,26 @@ export default function MemePreview({
       return (
         <Frame className={`${className} bg-black`}>
           <div className="flex flex-col h-full p-4 sm:p-6">
-            <div className="relative flex-1 border-2 border-white/80 bg-black overflow-hidden">
-              <PhotoLayer src={photo} className="object-contain p-2" />
-            </div>
-            <div className="text-center mt-3 sm:mt-4 text-white">
-              <div className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none">
-                {c.title}
+            {isTextMode ? (
+              // No photo: title fills the upper area as the visual hook.
+              <div className="relative flex-1 flex items-center justify-center overflow-hidden border-2 border-white/80">
+                <PhotoLayer src={photo} />
+                <div className="relative z-10 text-center text-white font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.18em] leading-none px-4 text-[clamp(28px,9cqw,72px)] [text-shadow:_0_4px_24px_rgba(0,0,0,.5)]">
+                  {c.title}
+                </div>
               </div>
-              <div className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1">
+            ) : (
+              <div className="relative flex-1 border-2 border-white/80 bg-black overflow-hidden">
+                <PhotoLayer src={photo} className="object-contain p-2" />
+              </div>
+            )}
+            <div className="text-center mt-3 sm:mt-4 text-white">
+              {!isTextMode && (
+                <div className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none">
+                  {c.title}
+                </div>
+              )}
+              <div className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1 px-2 leading-snug">
                 {c.subtitle}
               </div>
             </div>
@@ -160,7 +190,17 @@ export default function MemePreview({
         </Frame>
       );
 
-    case "banner-side":
+    case "banner-side": {
+      // Scale type down as the banner caption gets longer so it never spills.
+      const len = (c.banner ?? "").length;
+      const sizeClass =
+        len <= 18
+          ? "text-[clamp(20px,7cqw,44px)]"
+          : len <= 40
+            ? "text-[clamp(16px,5.2cqw,32px)]"
+            : len <= 70
+              ? "text-[clamp(13px,4cqw,24px)]"
+              : "text-[clamp(11px,3.2cqw,18px)]";
       return (
         <Frame className={className}>
           <div className="flex h-full">
@@ -168,13 +208,16 @@ export default function MemePreview({
               <PhotoLayer src={photo} />
             </div>
             <div className="flex-1 bg-acid text-ink flex items-center justify-center p-3">
-              <div className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-tight text-[clamp(16px,5cqw,36px)] leading-[0.95] [writing-mode:horizontal-tb]">
+              <div
+                className={`font-[family-name:var(--font-display)] font-extrabold uppercase tracking-tight leading-[0.95] break-words text-center ${sizeClass}`}
+              >
                 {c.banner}
               </div>
             </div>
           </div>
         </Frame>
       );
+    }
 
     default:
       return (

@@ -43,7 +43,7 @@ export const TEMPLATES: Template[] = [
     vibe: "Black-mat poster. TITLE in caps + small subtitle below. Use for ironic life-advice format.",
     slots: [
       { key: "title", label: "Title (one word, all caps)", maxChars: 14 },
-      { key: "subtitle", label: "Subtitle", maxChars: 100 },
+      { key: "subtitle", label: "Subtitle", maxChars: 120 },
     ],
   },
   {
@@ -51,9 +51,9 @@ export const TEMPLATES: Template[] = [
     name: "Tabloid",
     vibe: "Magazine headline overlay, masthead + kicker. Use when the photo deserves to be news.",
     slots: [
-      { key: "masthead", label: "Masthead", defaultText: "WEEKLY!", maxChars: 12 },
-      { key: "headline", label: "Headline", maxChars: 70 },
-      { key: "kicker", label: "Kicker line", maxChars: 50 },
+      { key: "masthead", label: "Masthead", defaultText: "WEEKLY!", maxChars: 14 },
+      { key: "headline", label: "Headline", maxChars: 90 },
+      { key: "kicker", label: "Kicker line", maxChars: 80 },
     ],
   },
   {

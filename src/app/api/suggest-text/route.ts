@@ -84,7 +84,8 @@ function clampSuggestion(s: z.infer<typeof SuggestionSchema>) {
   for (const slot of tpl.slots) {
     const v = s.captions[slot.key];
     if (typeof v === "string" && v.trim().length > 0) {
-      captions[slot.key] = v.trim().slice(0, (slot.maxChars ?? 200) + 20);
+      // Generous buffer — the renderer handles overflow.
+      captions[slot.key] = v.trim().slice(0, (slot.maxChars ?? 200) + 80);
     } else if (slot.defaultText) {
       captions[slot.key] = slot.defaultText;
     } else {
