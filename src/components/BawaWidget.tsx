@@ -1,6 +1,48 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+
+/** Very small inline markdown renderer: **bold**, *italic*, `code`. Newlines preserved by CSS. */
+function MarkdownInline({ text }: { text: string }) {
+  const tokens: Array<{ type: "text" | "bold" | "italic" | "code"; value: string }> = [];
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) tokens.push({ type: "text", value: text.slice(last, m.index) });
+    const t = m[0];
+    if (t.startsWith("**")) tokens.push({ type: "bold", value: t.slice(2, -2) });
+    else if (t.startsWith("`")) tokens.push({ type: "code", value: t.slice(1, -1) });
+    else tokens.push({ type: "italic", value: t.slice(1, -1) });
+    last = m.index + t.length;
+  }
+  if (last < text.length) tokens.push({ type: "text", value: text.slice(last) });
+  return (
+    <>
+      {tokens.map((tk, i) => {
+        if (tk.type === "bold")
+          return (
+            <strong key={i} className="font-bold text-acid">
+              {tk.value}
+            </strong>
+          );
+        if (tk.type === "italic")
+          return (
+            <em key={i} className="italic">
+              {tk.value}
+            </em>
+          );
+        if (tk.type === "code")
+          return (
+            <code key={i} className="font-[family-name:var(--font-mono)] text-[0.9em] bg-ink-2 px-1 rounded">
+              {tk.value}
+            </code>
+          );
+        return <Fragment key={i}>{tk.value}</Fragment>;
+      })}
+    </>
+  );
+}
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
@@ -95,14 +137,21 @@ export default function BawaWidget() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label="open helper"
-        className="fixed bottom-4 right-4 z-50 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-acid text-ink font-bold shadow-[0_8px_30px_rgba(198,242,78,0.35)] flex items-center justify-center hover:scale-105 active:scale-95 transition text-2xl"
-      >
-        {open ? "×" : "🪳"}
-      </button>
+      {/* Floating button + label */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-center gap-1.5">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-label="open Bawa helper"
+          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-acid text-ink font-bold shadow-[0_8px_30px_rgba(198,242,78,0.35)] flex items-center justify-center hover:scale-105 active:scale-95 transition text-2xl"
+        >
+          {open ? "×" : "🪳"}
+        </button>
+        {!open && (
+          <span className="font-[family-name:var(--font-mono)] text-[9px] sm:text-[10px] uppercase tracking-widest text-paper/70 bg-ink/85 backdrop-blur px-2 py-0.5 rounded-full border border-[var(--line)] whitespace-nowrap pointer-events-none">
+            need cockroach help?
+          </span>
+        )}
+      </div>
 
       {/* Panel */}
       {open && (
@@ -135,13 +184,17 @@ export default function BawaWidget() {
                 {history.map((m, i) => (
                   <div
                     key={i}
-                    className={`max-w-[90%] rounded-lg px-3 py-2 text-[14px] leading-snug ${
+                    className={`max-w-[90%] rounded-lg px-3 py-2 text-[14px] leading-relaxed whitespace-pre-line ${
                       m.role === "user"
                         ? "ml-auto bg-acid text-ink"
                         : "bg-ink-2 border border-[var(--line)] text-paper"
                     }`}
                   >
-                    {m.content}
+                    {m.role === "assistant" ? (
+                      <MarkdownInline text={m.content} />
+                    ) : (
+                      m.content
+                    )}
                   </div>
                 ))}
                 {sending && (
