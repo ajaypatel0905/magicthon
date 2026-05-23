@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseService } from "@/lib/supabase";
@@ -6,6 +7,60 @@ import MemeViewer from "@/components/MemeViewer";
 import BackButton from "@/components/BackButton";
 
 export const dynamic = "force-dynamic";
+
+function siteUrl(): string {
+  // Prefer the env Vercel sets automatically.
+  const v = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  if (v) return `https://${v}`;
+  return "https://magicthon-xt95.vercel.app";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  const ogUrl = `${siteUrl()}/api/og/${encodeURIComponent(code)}`;
+  const shareUrl = `${siteUrl()}/m/${encodeURIComponent(code)}`;
+  const sb = supabaseService();
+  let title = "magicthon · a meme";
+  let description = "Made on magicthon. Drop a photo, get six memes, ship a link.";
+  if (sb) {
+    const q = await sb
+      .from("memes")
+      .select("captions, observations")
+      .eq("code", code.toLowerCase())
+      .single();
+    if (q.data) {
+      const caps = q.data.captions as Record<string, string>;
+      const firstLine =
+        caps.top || caps.headline || caps.title || caps.banner || caps.caption || caps.message || "";
+      if (firstLine) title = `magicthon · ${firstLine.slice(0, 70)}`;
+      if (Array.isArray(q.data.observations) && q.data.observations.length) {
+        description = `${(q.data.observations as string[]).join(" · ").slice(0, 180)}`;
+      }
+    }
+  }
+  return {
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      url: shareUrl,
+      title,
+      description,
+      siteName: "magicthon",
+      images: [{ url: ogUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogUrl],
+    },
+  };
+}
 
 export default async function MemePage({
   params,
