@@ -262,12 +262,27 @@ function PhotoLayer({
     );
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt=""
-      className={`absolute inset-0 w-full h-full object-cover ${className}`}
-      draggable={false}
-    />
+    <>
+      {/* Shimmer placeholder shown until the image paints. */}
+      <div
+        className={`absolute inset-0 w-full h-full bg-gradient-to-br from-[#1a1a14] via-[#22221c] to-[#15150f] animate-pulse ${className}`}
+        aria-hidden
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0 ${className}`}
+        draggable={false}
+        onLoad={(e) => {
+          (e.currentTarget as HTMLImageElement).style.opacity = "1";
+        }}
+        onError={(e) => {
+          // On failure, leave the shimmer as the background.
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+    </>
   );
 }

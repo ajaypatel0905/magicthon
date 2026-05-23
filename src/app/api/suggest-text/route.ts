@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 function pollinationsUrl(prompt: string, seed: number): string {
-  // Free image-gen endpoint backed by Flux. Caches by URL.
+  // Pollinations + Flux. Slow first request (~20-40s) but cached after.
   const encoded = encodeURIComponent(prompt);
   return `https://image.pollinations.ai/prompt/${encoded}?width=768&height=768&model=flux&nologo=true&enhance=true&seed=${seed}`;
 }
@@ -137,12 +137,10 @@ export async function POST(req: Request) {
       if (seen.has(s.template_id)) continue;
       const c = clampSuggestion(s);
       if (!c) continue;
-      // Deterministic seed per topic + index so the same topic stays consistent and Pollinations can cache.
       const seed =
         Math.abs([...topic + c.template_id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 0)) % 1_000_000;
-      const background = pollinationsUrl(c.image_prompt, seed);
       seen.add(c.template_id);
-      cleaned.push({ ...c, background });
+      cleaned.push({ ...c, background: pollinationsUrl(c.image_prompt, seed) });
       if (cleaned.length >= 6) break;
     }
 

@@ -152,13 +152,24 @@ export default function TextPage() {
         )}
 
         {loading && (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {Array.from({ length: 6 }).map((_, n) => (
-              <div
-                key={n}
-                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] animate-pulse"
-              />
-            ))}
+          <div className="mt-8">
+            <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55 mb-3 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-acid animate-pulse" />
+              writing six captions · generating six images · ~20s
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, n) => (
+                <div
+                  key={n}
+                  className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden"
+                >
+                  <div
+                    className="absolute inset-0 bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)] animate-pulse"
+                    style={{ animationDelay: `${n * 150}ms` }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
