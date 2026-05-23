@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
+import LoadingTicker from "@/components/LoadingTicker";
 import { TEMPLATES, TEMPLATE_BY_ID, type Template } from "@/lib/templates";
 
 const COLOR_SWATCHES = [
@@ -107,10 +108,8 @@ export default function MemeEditor({
     setCaptions(next);
   }
 
-  async function reroll(instruction?: string) {
-    const isInstructed = !!instruction?.trim();
-    if (isInstructed) setAiEditing(true);
-    else setRerolling(true);
+  async function reroll() {
+    setRerolling(true);
     try {
       const res = await fetch("/api/reroll", {
         method: "POST",
@@ -120,18 +119,50 @@ export default function MemeEditor({
           current_captions: captions,
           ...(textMode ? { topic: topic ?? observations.join(", ") } : { image: photo }),
           observations,
-          ...(isInstructed ? { instruction: instruction?.trim() } : {}),
         }),
       });
       const json = await res.json();
       if (res.ok && json.captions) {
         setCaptions(json.captions as Record<string, string>);
-        if (isInstructed) setAiInstruction("");
       }
     } catch {
       /* ignore */
     } finally {
       setRerolling(false);
+    }
+  }
+
+  // "Edit with AI": snapshot the full current meme preview, send to Gemini
+  // via OpenRouter with the user's instruction, swap the photo to the edited
+  // result. Slang ticker overlays the preview during the wait.
+  async function aiEditImage(instruction: string) {
+    const text = instruction.trim();
+    if (!text || !renderRef.current) return;
+    setAiEditing(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(renderRef.current, {
+        cacheBust: true,
+        pixelRatio: 1.5,
+        skipFonts: false,
+      });
+      const res = await fetch("/api/edit-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl, instruction: text }),
+      });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        setPhoto(json.url);
+        // Reset slot positions since the new image is a fresh canvas.
+        setPositions({});
+        setAiInstruction("");
+      } else {
+        console.error("edit-image failed", json);
+      }
+    } catch {
+      /* ignore */
+    } finally {
       setAiEditing(false);
     }
   }
@@ -310,17 +341,34 @@ export default function MemeEditor({
     <div className="grid lg:grid-cols-[1.1fr_1fr] gap-6">
       {/* Preview */}
       <div>
-        <div
-          ref={renderRef}
-          onPointerDown={onPointerDown}
-          className={`max-w-md mx-auto ${draggable ? "cursor-grab" : ""} ${draggingSlot ? "cursor-grabbing" : ""}`}
-        >
-          <MemePreview
-            template={tpl}
-            photo={photo}
-            captions={captions}
-            positions={positions}
-          />
+        <div className="relative max-w-md mx-auto">
+          <div
+            ref={renderRef}
+            onPointerDown={onPointerDown}
+            className={`${draggable ? "cursor-grab" : ""} ${draggingSlot ? "cursor-grabbing" : ""}`}
+          >
+            <MemePreview
+              template={tpl}
+              photo={photo}
+              captions={captions}
+              positions={positions}
+            />
+          </div>
+          {aiEditing && (
+            <div className="absolute inset-0 z-20 rounded-md backdrop-blur-md bg-ink/55 flex flex-col items-center justify-center gap-3 text-center p-6">
+              <div className="font-[family-name:var(--font-display)] font-extrabold text-xl text-acid">
+                editing with AI…
+              </div>
+              <LoadingTicker
+                variant="paint"
+                intervalMs={2200}
+                className="!text-[13px] !text-paper !tracking-wider"
+              />
+              <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/55 mt-1">
+                gemini is repainting · ~6-10s
+              </div>
+            </div>
+          )}
         </div>
         {draggable && (
           <p className="mt-3 text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45">
@@ -397,31 +445,31 @@ export default function MemeEditor({
             </button>
           </div>
 
-          {/* Edit with AI — user types directions */}
+          {/* Edit with AI — sends whole meme + instruction to Gemini, swaps photo */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (aiInstruction.trim()) void reroll(aiInstruction);
+              if (aiInstruction.trim()) void aiEditImage(aiInstruction);
             }}
             className="flex gap-2 items-stretch"
           >
             <input
               value={aiInstruction}
               onChange={(e) => setAiInstruction(e.target.value)}
-              placeholder="edit with AI — e.g. 'make it more Hyderabadi', 'shorter', 'more savage'"
+              placeholder="edit image with AI — 'make it cinematic', 'add dramatic lighting', 'sepia 70s film'"
               className="flex-1 bg-ink-2 border border-[var(--line)] rounded-md px-3 py-2 text-sm text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
-              disabled={aiEditing || rerolling}
+              disabled={aiEditing}
             />
             <button
               type="submit"
-              disabled={!aiInstruction.trim() || aiEditing || rerolling}
+              disabled={!aiInstruction.trim() || aiEditing}
               className="rounded-md bg-acid text-ink px-3 py-2 text-[11px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-widest disabled:opacity-60 flex items-center gap-1.5"
-              title="apply AI direction"
+              title="apply AI direction to the image"
             >
               {aiEditing ? (
                 <>
                   <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse" />
-                  cooking
+                  painting
                 </>
               ) : (
                 <>✨ apply</>

@@ -230,7 +230,7 @@ export default function Home() {
             </Link>
           </div>
           <Suspense fallback={<div className="h-48 animate-pulse bg-ink-2 rounded-lg" />}>
-            <LatestWall limit={9} />
+            <LatestWall limit={3} />
           </Suspense>
         </div>
       </section>

@@ -44,7 +44,7 @@ export default async function LatestWall({ limit = 6 }: { limit?: number }) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {rows.map((r) => {
         const tpl = TEMPLATE_BY_ID[r.template_id];
         if (!tpl) return null;

@@ -116,11 +116,10 @@ body {
 }
 
 .aurora {
-  position: absolute;
-  inset: 0;
+  /* `position` left to the Tailwind class on the element (e.g. fixed inset-0
+     for full-viewport, or absolute inset-0 for section-scoped). */
   overflow: hidden;
   pointer-events: none;
-  z-index: 0;
 }
 .aurora::before,
 .aurora::after,
@@ -128,38 +127,38 @@ body {
   content: "";
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.5;
+  filter: blur(60px);
+  opacity: 0.85;
   will-change: transform;
 }
 .aurora::before {
-  width: 60vw;
-  height: 60vw;
-  max-width: 720px;
-  max-height: 720px;
-  top: -20%;
-  right: -15%;
-  background: radial-gradient(circle, rgba(198, 242, 78, 0.55), transparent 65%);
+  width: 70vw;
+  height: 70vw;
+  max-width: 820px;
+  max-height: 820px;
+  top: -15%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(198, 242, 78, 0.85), rgba(198, 242, 78, 0.1) 50%, transparent 75%);
   animation: aurora-1 18s ease-in-out infinite;
 }
 .aurora::after {
-  width: 55vw;
-  height: 55vw;
-  max-width: 640px;
-  max-height: 640px;
-  bottom: -25%;
-  left: -20%;
-  background: radial-gradient(circle, rgba(255, 84, 54, 0.4), transparent 65%);
+  width: 65vw;
+  height: 65vw;
+  max-width: 720px;
+  max-height: 720px;
+  bottom: -20%;
+  left: -15%;
+  background: radial-gradient(circle, rgba(255, 84, 54, 0.7), rgba(255, 84, 54, 0.08) 50%, transparent 75%);
   animation: aurora-2 24s ease-in-out infinite;
 }
 .aurora-blob {
-  width: 40vw;
-  height: 40vw;
-  max-width: 480px;
-  max-height: 480px;
-  top: 30%;
-  left: 35%;
-  background: radial-gradient(circle, rgba(110, 58, 255, 0.32), transparent 65%);
+  width: 55vw;
+  height: 55vw;
+  max-width: 620px;
+  max-height: 620px;
+  top: 28%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(110, 58, 255, 0.6), rgba(110, 58, 255, 0.08) 50%, transparent 75%);
   animation: aurora-3 22s ease-in-out infinite;
 }
 
