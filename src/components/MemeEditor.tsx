@@ -57,6 +57,8 @@ export default function MemeEditor({
   const [draggingSlot, setDraggingSlot] = useState<string | null>(null);
   const [rerolling, setRerolling] = useState(false);
   const [regenBg, setRegenBg] = useState(false);
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [aiEditing, setAiEditing] = useState(false);
 
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
@@ -105,8 +107,10 @@ export default function MemeEditor({
     setCaptions(next);
   }
 
-  async function reroll() {
-    setRerolling(true);
+  async function reroll(instruction?: string) {
+    const isInstructed = !!instruction?.trim();
+    if (isInstructed) setAiEditing(true);
+    else setRerolling(true);
     try {
       const res = await fetch("/api/reroll", {
         method: "POST",
@@ -116,16 +120,19 @@ export default function MemeEditor({
           current_captions: captions,
           ...(textMode ? { topic: topic ?? observations.join(", ") } : { image: photo }),
           observations,
+          ...(isInstructed ? { instruction: instruction?.trim() } : {}),
         }),
       });
       const json = await res.json();
       if (res.ok && json.captions) {
         setCaptions(json.captions as Record<string, string>);
+        if (isInstructed) setAiInstruction("");
       }
     } catch {
       /* ignore */
     } finally {
       setRerolling(false);
+      setAiEditing(false);
     }
   }
 
@@ -374,8 +381,8 @@ export default function MemeEditor({
               captions
             </span>
             <button
-              onClick={reroll}
-              disabled={rerolling}
+              onClick={() => reroll()}
+              disabled={rerolling || aiEditing}
               className="rounded-full border border-[var(--line)] hover:border-acid/60 disabled:opacity-60 px-3 py-1 text-[11px] font-[family-name:var(--font-mono)] uppercase tracking-widest flex items-center gap-1.5"
               title="ask the model for a different take"
             >
@@ -389,6 +396,38 @@ export default function MemeEditor({
               )}
             </button>
           </div>
+
+          {/* Edit with AI — user types directions */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (aiInstruction.trim()) void reroll(aiInstruction);
+            }}
+            className="flex gap-2 items-stretch"
+          >
+            <input
+              value={aiInstruction}
+              onChange={(e) => setAiInstruction(e.target.value)}
+              placeholder="edit with AI — e.g. 'make it more Hyderabadi', 'shorter', 'more savage'"
+              className="flex-1 bg-ink-2 border border-[var(--line)] rounded-md px-3 py-2 text-sm text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
+              disabled={aiEditing || rerolling}
+            />
+            <button
+              type="submit"
+              disabled={!aiInstruction.trim() || aiEditing || rerolling}
+              className="rounded-md bg-acid text-ink px-3 py-2 text-[11px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-widest disabled:opacity-60 flex items-center gap-1.5"
+              title="apply AI direction"
+            >
+              {aiEditing ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse" />
+                  cooking
+                </>
+              ) : (
+                <>✨ apply</>
+              )}
+            </button>
+          </form>
           {tpl.slots.map((slot) => {
             const v = captions[slot.key] ?? "";
             const long = (slot.maxChars ?? 80) > 60;

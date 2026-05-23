@@ -13,6 +13,8 @@ const Body = z.object({
   image: z.string().optional(), // data URL or http URL — for photo mode
   topic: z.string().optional(), // text mode
   observations: z.array(z.string()).optional(),
+  /** Optional user-provided direction: "make it funnier", "more Hyderabadi", "shorter", etc. */
+  instruction: z.string().max(400).optional(),
 });
 
 const Resp = z.object({
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.message }, { status: 400 });
   }
-  const { template_id, current_captions, image, topic, observations } = parsed.data;
+  const { template_id, current_captions, image, topic, observations, instruction } = parsed.data;
   const tpl = TEMPLATE_BY_ID[template_id];
   if (!tpl) return NextResponse.json({ error: "unknown template" }, { status: 400 });
   if (!image && !topic) {
@@ -47,6 +49,7 @@ Template: ${tpl.id} — ${tpl.name}. ${tpl.vibe}
 Slots required: { ${slotKeys} }
 Current captions (avoid repeating these jokes): ${JSON.stringify(current_captions)}
 ${observations ? `Observations about the photo: ${observations.join(" · ")}` : ""}
+${instruction ? `\nUSER DIRECTION (follow strictly): "${instruction}"` : ""}
 
 Rules:
 - Funny > clever > earnest. Specific > generic.

@@ -26,7 +26,7 @@ export async function generateMetadata({
   const shareUrl = `${siteUrl()}/m/${encodeURIComponent(code)}`;
   const sb = supabaseService();
   let title = "magicthon · a meme";
-  let description = "Made on magicthon. Drop a photo, get six memes, ship a link.";
+  let description = "Made on magicthon. Drop a photo, get memes, ship a link.";
   if (sb) {
     const q = await sb
       .from("memes")

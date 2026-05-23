@@ -329,6 +329,8 @@ function Frame({
 const FAST_HOSTS = ["images.unsplash.com", "supabase.co", "upload.wikimedia.org"];
 
 function isFastUrl(src: string): boolean {
+  // Same-origin (starts with "/") = fast.
+  if (src.startsWith("/")) return true;
   return FAST_HOSTS.some((h) => src.includes(h));
 }
 

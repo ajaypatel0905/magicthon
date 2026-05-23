@@ -41,7 +41,7 @@ export const SLANG_LINES = [
   "pixels arranging themselves",
   "AI is reading the room",
   "consulting the spec book",
-  "drafting six versions",
+  "drafting fresh versions",
   "polishing the punchline",
 
   // Hyderabad-specific

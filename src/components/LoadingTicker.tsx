@@ -32,10 +32,10 @@ export default function LoadingTicker({
 
   return (
     <span
-      className={`inline-flex items-center gap-2 font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 ${className}`}
+      className={`inline-flex items-start gap-2 font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 ${className}`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-acid animate-pulse flex-none" />
-      <span key={i} className="float-in">
+      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-acid animate-pulse flex-none" />
+      <span key={i} className="float-in text-balance break-words">
         {lines[i]}
       </span>
     </span>

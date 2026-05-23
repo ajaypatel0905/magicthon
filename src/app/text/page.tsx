@@ -95,7 +95,7 @@ export default function TextPage() {
         </h1>
         <p className="text-paper/70 max-w-xl mb-6">
           Skip the upload. Just describe what&apos;s happening and we&apos;ll
-          write six text memes.
+          write a fresh batch of text memes.
         </p>
 
         <form
@@ -118,7 +118,7 @@ export default function TextPage() {
               disabled={loading || !topic.trim()}
               className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-sm disabled:opacity-60"
             >
-              {loading ? "cooking bawa…" : "cook six →"}
+              {loading ? "cooking bawa…" : "cook it up →"}
             </button>
             <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45">
               or try:
@@ -158,23 +158,23 @@ export default function TextPage() {
         {loading && (
           <div className="mt-8">
             <div className="mb-3 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/40">
-              captions + 6 images · ~30s
+              cooking captions + images · ~30s
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, n) => (
                 <div
                   key={n}
-                  className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-4 text-center"
+                  className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-5 text-center"
                 >
                   <div
                     className="absolute inset-0 bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)] animate-pulse"
                     style={{ animationDelay: `${n * 150}ms` }}
                   />
-                  <div className="relative z-10">
+                  <div className="relative z-10 max-w-full">
                     <LoadingTicker
                       variant={n % 2 ? "paint" : "cook"}
                       intervalMs={2600 + n * 220}
-                      className="!text-[11px] !text-paper/80"
+                      className="!text-[14px] sm:!text-[15px] !text-paper !tracking-wider"
                     />
                   </div>
                 </div>

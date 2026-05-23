@@ -10,12 +10,12 @@ import RotatingText from "@/components/RotatingText";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
 const HERO_TAGLINES = [
-  "your photo + a vision model + six ideas + one shareable link.",
-  "drop a photo. the model writes six. you pick. ship the link.",
+  "your photo + a vision model + one shareable link.",
+  "drop a photo. the model writes. you pick. ship the link.",
   "memes that actually reference your photo. revolutionary, we know.",
   "Impact font, but with taste. bawa, light lo.",
   "stop using meme generators from 2009.",
-  "six captions, one survivor. ship it live.",
+  "fresh captions, one survivor. ship it live.",
 ] as const;
 
 const HERO_EYEBROWS = [
@@ -35,7 +35,7 @@ const MARQUEE = [
   "🪳 bawa, light lo",
   "🪳 voted cockroach janta party",
   "🪳 no signup, no watermark, no excuses",
-  "🪳 six suggestions, one survivor",
+  "🪳 fresh captions, one survivor",
   "🪳 we're not unemployed, we're between dynasties",
 ];
 
@@ -52,9 +52,8 @@ const SECTION_MEMES = {
     captions: { bottom: "people are making memes RIGHT NOW. live." },
   },
   cta: {
-    // Official White House portrait — public domain.
-    photo:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/640px-Donald_Trump_official_portrait.jpg",
+    // Official White House portrait — public domain. Self-hosted from /public.
+    photo: "/trump.jpg",
     template_id: "top-bottom-impact",
     captions: { top: "YOUR TURN", bottom: "DROP A PHOTO, WE'LL COOK" },
   },
@@ -173,9 +172,9 @@ export default function Home() {
       </div>
 
       {/* DIFF — section header is itself a meme */}
-      <section className="px-4 py-16 sm:py-24 border-b border-[var(--line)]">
+      <section className="px-4 py-10 sm:py-14 border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto">
-          <SectionMeme kind="diff" className="mb-12" />
+          <SectionMeme kind="diff" className="mb-8" />
           <div className="grid sm:grid-cols-2 gap-0 border-t border-[var(--line)]">
             <div className="border-b sm:border-r border-[var(--line)] p-5">
               <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/50 mb-3">
@@ -195,7 +194,7 @@ export default function Home() {
               </div>
               <ul className="space-y-1.5 text-paper/90 text-[15px] leading-relaxed">
                 <li>a vision model that <em className="not-italic text-acid">looks</em></li>
-                <li>six photo-specific ideas, six templates</li>
+                <li>photo-specific ideas across many templates</li>
                 <li>tactile editor — fonts, layouts, your call</li>
                 <li>no signup. no watermark. no app.</li>
                 <li>realtime reactions on every share link</li>
@@ -206,7 +205,7 @@ export default function Home() {
       </section>
 
       {/* WALL — biggest section, the product as content */}
-      <section className="px-4 py-16 sm:py-24 border-b border-[var(--line)]">
+      <section className="px-4 py-10 sm:py-14 border-b border-[var(--line)]">
         <div className="max-w-6xl mx-auto">
           <SectionMeme kind="wall" className="mb-10" />
           <div className="flex items-end justify-between gap-4 mb-6">
@@ -227,7 +226,7 @@ export default function Home() {
       </section>
 
       {/* THE FLOW — visual recipe, less text */}
-      <section className="px-4 py-16 sm:py-20 border-b border-[var(--line)]">
+      <section className="px-4 py-10 sm:py-12 border-b border-[var(--line)]">
         <div className="max-w-5xl mx-auto">
           <div className="font-[family-name:var(--font-mono)] text-[12px] text-acid uppercase tracking-widest mb-3">
             the loop
@@ -238,7 +237,7 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               ["📤", "drop", "drag · paste · snap"],
-              ["✨", "cook", "six ideas. photo-aware."],
+              ["✨", "cook", "photo-aware ideas"],
               ["🎨", "edit", "swap templates. nudge text."],
               ["🔗", "ship", "link. anyone reacts."],
             ].map(([icon, t, sub]) => (
@@ -253,7 +252,7 @@ export default function Home() {
       </section>
 
       {/* CTA section — meme + dropzone */}
-      <section id="upload" className="px-4 py-20 sm:py-28">
+      <section id="upload" className="px-4 py-12 sm:py-16">
         <div className="max-w-3xl mx-auto">
           <SectionMeme kind="cta" className="mb-10" />
           <UploadDropzone />

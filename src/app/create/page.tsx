@@ -119,7 +119,7 @@ export default function CreatePage() {
           ← back
         </Link>
         <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-4 tracking-tight">
-          {loading ? "Cooking your six." : data ? "Pick one." : "Drop a photo."}
+          {loading ? "Cooking it up." : data ? "Pick one." : "Drop a photo."}
         </h1>
         {data && (
           <p className="text-paper/70 mb-6 text-sm sm:text-base">
@@ -139,16 +139,16 @@ export default function CreatePage() {
             {Array.from({ length: 6 }).map((_, n) => (
               <div
                 key={n}
-                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-3 text-center"
+                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-4 text-center"
               >
                 <div
                   className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]"
                   style={{ animationDelay: `${n * 130}ms` }}
                 />
-                <div className="relative z-10">
+                <div className="relative z-10 max-w-full">
                   <LoadingTicker
                     intervalMs={2600 + n * 220}
-                    className="!text-[10px] !text-paper/70"
+                    className="!text-[13px] sm:!text-[14px] !text-paper !tracking-wider"
                   />
                 </div>
               </div>
@@ -255,16 +255,16 @@ function LoadingGrid({ photo }: { photo: string }) {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-3 text-center"
+            className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-4 text-center"
           >
             <div
               className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]"
               style={{ animationDelay: `${i * 130}ms` }}
             />
-            <div className="relative z-10">
+            <div className="relative z-10 max-w-full">
               <LoadingTicker
                 intervalMs={2400 + i * 270}
-                className="!text-[10px] !text-paper/80 !tracking-wider"
+                className="!text-[13px] sm:!text-[14px] !text-paper !tracking-wider"
               />
             </div>
           </div>
