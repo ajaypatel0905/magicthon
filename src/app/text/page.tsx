@@ -58,17 +58,25 @@ export default function TextPage() {
     setPicked(i);
     if (typeof window !== "undefined") {
       window.history.pushState({ mt_picked: i }, "");
+      sessionStorage.setItem("mt:picked", i.toString());
     }
   }
 
   useEffect(() => {
-    // Restore picked from current history state on mount (e.g., after
-    // hitting browser back from /m).
     if (typeof window !== "undefined") {
-      const s = window.history.state as { mt_picked?: number } | null;
-      if (s && typeof s.mt_picked === "number") {
+      const pickedKey = sessionStorage.getItem("mt:picked");
+      const backRestore = sessionStorage.getItem("mt:back-restore");
+      const stateMaybe = window.history.state as { mt_picked?: number } | null;
+      if (pickedKey !== null && backRestore === "1") {
+        const n = parseInt(pickedKey, 10);
+        if (!Number.isNaN(n)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setPicked(n);
+        }
+        sessionStorage.removeItem("mt:back-restore");
+      } else if (stateMaybe && typeof stateMaybe.mt_picked === "number") {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setPicked(s.mt_picked);
+        setPicked(stateMaybe.mt_picked);
       }
     }
     function onPop(e: PopStateEvent) {
@@ -251,8 +259,13 @@ export default function TextPage() {
               initial={data.suggestions[picked]}
               allSuggestions={data.suggestions}
               onBack={() => {
-                if (typeof window !== "undefined" && window.history.state?.mt_picked !== undefined) {
-                  window.history.back();
+                if (typeof window !== "undefined") {
+                  sessionStorage.removeItem("mt:picked");
+                  if (window.history.state?.mt_picked !== undefined) {
+                    window.history.back();
+                  } else {
+                    setPicked(null);
+                  }
                 } else {
                   setPicked(null);
                 }

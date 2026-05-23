@@ -339,9 +339,13 @@ export default function MemeEditor({
         setShipping(false);
         return;
       }
-      // Flag for the share page so it shows the "back to edit" button
-      // for THIS session only — not for someone opening the shared link.
-      try { sessionStorage.setItem("mt:just-shipped", json.code); } catch {}
+      // Flags for the share page:
+      // - mt:just-shipped: so "back to edit" button shows on /m
+      // - mt:back-restore: tells /create or /text to re-mount in editor mode
+      try {
+        sessionStorage.setItem("mt:just-shipped", json.code);
+        sessionStorage.setItem("mt:back-restore", "1");
+      } catch {}
       router.push(json.url);
     } catch (e) {
       setShipError(e instanceof Error ? e.message : "network error");

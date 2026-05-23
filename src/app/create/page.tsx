@@ -50,6 +50,7 @@ export default function CreatePage() {
     setPicked(i);
     if (typeof window !== "undefined") {
       window.history.pushState({ mt_picked: i }, "");
+      sessionStorage.setItem("mt:picked", i.toString());
     }
   }
 
@@ -61,15 +62,21 @@ export default function CreatePage() {
     if (p && cached && cached.photo === p) {
       setData(cached.data);
     }
-    // If we navigated back to this page from /m, the history entry still
-    // carries the meme we were editing — restore it so one "back" press
-    // lands directly in the editor.
-    if (typeof window !== "undefined") {
-      const s = window.history.state as { mt_picked?: number } | null;
-      if (s && typeof s.mt_picked === "number") {
-        setPicked(s.mt_picked);
-      }
+    // Restore picked from two sources, in order of trust:
+    // 1. mt:picked sessionStorage (always reflects last pick, survives navigation)
+    // 2. window.history.state (works for browser back when state is preserved)
+    const pickedKey = sessionStorage.getItem("mt:picked");
+    const backRestore = sessionStorage.getItem("mt:back-restore");
+    const stateMaybe = window.history.state as { mt_picked?: number } | null;
+    let initialPicked: number | null = null;
+    if (pickedKey !== null && backRestore === "1") {
+      const n = parseInt(pickedKey, 10);
+      if (!Number.isNaN(n)) initialPicked = n;
+      sessionStorage.removeItem("mt:back-restore");
+    } else if (stateMaybe && typeof stateMaybe.mt_picked === "number") {
+      initialPicked = stateMaybe.mt_picked;
     }
+    if (initialPicked !== null) setPicked(initialPicked);
     setHydrated(true);
     function onPop(e: PopStateEvent) {
       const s = e.state as { mt_picked?: number } | null;
@@ -197,8 +204,13 @@ export default function CreatePage() {
               initial={data.suggestions[picked]}
               allSuggestions={data.suggestions}
               onBack={() => {
-                if (typeof window !== "undefined" && window.history.state?.mt_picked !== undefined) {
-                  window.history.back();
+                if (typeof window !== "undefined") {
+                  sessionStorage.removeItem("mt:picked");
+                  if (window.history.state?.mt_picked !== undefined) {
+                    window.history.back();
+                  } else {
+                    setPicked(null);
+                  }
                 } else {
                   setPicked(null);
                 }
