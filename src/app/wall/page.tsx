@@ -65,7 +65,7 @@ export default async function WallPage() {
         <div className="mt-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(40px,8vw,86px)]">
-              the wall.
+              The wall.
             </h1>
             <p className="text-paper/70 mt-3 max-w-xl">
               every meme made on magicthon. new ones land here live. tap any

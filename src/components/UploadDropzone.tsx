@@ -93,15 +93,37 @@ export default function UploadDropzone() {
             const f = e.target.files?.[0];
             if (f) void handle(f);
           }}
-          capture="environment"
         />
         <div className="font-[family-name:var(--font-display)] font-bold text-2xl mb-1">
           {busy ? "Reading…" : "Drop a photo"}
         </div>
         <div className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/60">
-          drag · paste · tap to choose · or snap one
+          drag · paste · tap to choose
         </div>
       </label>
+      <div className="mt-2 text-center">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Create a camera-only file input on demand so the main picker
+            // stays at "Photos / Files".
+            const cam = document.createElement("input");
+            cam.type = "file";
+            cam.accept = "image/*";
+            cam.setAttribute("capture", "environment");
+            cam.onchange = () => {
+              const f = cam.files?.[0];
+              if (f) void handle(f);
+            };
+            cam.click();
+          }}
+          className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55 hover:text-acid underline underline-offset-4 decoration-paper/20"
+        >
+          or 📸 snap with camera
+        </button>
+      </div>
       {error && (
         <p className="mt-3 text-[14px] text-hot font-[family-name:var(--font-mono)]">
           {error}

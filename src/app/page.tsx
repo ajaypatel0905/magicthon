@@ -209,7 +209,7 @@ export default function Home() {
           <SectionMeme kind="wall" className="mb-10" />
           <div className="flex items-end justify-between gap-4 mb-6">
             <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(28px,5vw,52px)]">
-              the wall.
+              The wall.
             </h2>
             <Link
               href="/wall"
@@ -231,7 +231,7 @@ export default function Home() {
             the loop
           </div>
           <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(32px,6vw,64px)] mb-10">
-            drop → cook → ship → laugh.
+            Drop → cook → ship → laugh.
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[

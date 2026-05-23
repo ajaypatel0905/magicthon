@@ -145,7 +145,11 @@ export default function MemePreview({
     case "caption-above":
       return (
         <Frame className={className}>
-          <div className="bg-white text-ink px-4 py-3 text-[clamp(13px,3.4cqw,18px)] font-[family-name:var(--font-body)] leading-snug">
+          <div
+            data-slot="caption"
+            className="bg-white text-ink px-4 py-3 text-[clamp(13px,3.4cqw,18px)] font-[family-name:var(--font-body)] leading-snug"
+            style={slotTextStyle(positions, "caption")}
+          >
             {c.caption}
           </div>
           <div className="relative flex-1 min-h-0">
@@ -173,11 +177,19 @@ export default function MemePreview({
             )}
             <div className="text-center mt-3 sm:mt-4 text-white">
               {!isTextMode && (
-                <div className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none">
+                <div
+                  data-slot="title"
+                  className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none"
+                  style={slotTextStyle(positions, "title")}
+                >
                   {c.title}
                 </div>
               )}
-              <div className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1 px-2 leading-snug">
+              <div
+                data-slot="subtitle"
+                className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1 px-2 leading-snug"
+                style={slotTextStyle(positions, "subtitle")}
+              >
                 {c.subtitle}
               </div>
             </div>

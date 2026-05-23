@@ -61,6 +61,20 @@ export default function MemeEditor({
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
   const renderRef = useRef<HTMLDivElement>(null);
+  const inputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | null>>({});
+
+  function focusSlotInput(key: string) {
+    const el = inputRefs.current[key];
+    if (!el) return;
+    el.focus();
+    // Select all text so a quick re-type is easy.
+    try {
+      el.setSelectionRange(0, el.value.length);
+    } catch {
+      /* ignore */
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   const suggestionByTpl = useMemo(() => {
     const map: Record<string, Suggestion> = {};
@@ -225,7 +239,6 @@ export default function MemeEditor({
   const draggable = templateId === "top-bottom-impact" || templateId === "bottom-only";
 
   function onPointerDown(e: React.PointerEvent) {
-    if (!draggable) return;
     const target = (e.target as HTMLElement).closest<HTMLElement>("[data-slot]");
     if (!target) return;
     const key = target.dataset.slot;
@@ -237,12 +250,20 @@ export default function MemeEditor({
     const existing = positions[key] ?? {};
     const startDx = existing.dx ?? 0;
     const startDy = existing.dy ?? 0;
-    setDraggingSlot(key);
-    target.setPointerCapture(e.pointerId);
+    let didDrag = false;
 
     function move(ev: PointerEvent) {
-      const dxPct = ((ev.clientX - startX) / rect!.width) * 100;
-      const dyPct = ((ev.clientY - startY) / rect!.height) * 100;
+      const dxPx = ev.clientX - startX;
+      const dyPx = ev.clientY - startY;
+      if (!didDrag && Math.hypot(dxPx, dyPx) < 5) return;
+      if (!draggable) return; // Only impact templates support drag; tap still focuses input.
+      if (!didDrag) {
+        didDrag = true;
+        setDraggingSlot(key!);
+        try { target!.setPointerCapture(ev.pointerId); } catch {}
+      }
+      const dxPct = (dxPx / rect!.width) * 100;
+      const dyPct = (dyPx / rect!.height) * 100;
       const nx = Math.max(-45, Math.min(45, startDx + dxPct));
       const ny = Math.max(-50, Math.min(50, startDy + dyPct));
       setPositions((p) => ({
@@ -255,6 +276,8 @@ export default function MemeEditor({
       target!.removeEventListener("pointermove", move);
       target!.removeEventListener("pointerup", up);
       target!.removeEventListener("pointercancel", up);
+      // No drag = tap. Focus the corresponding caption input.
+      if (!didDrag) focusSlotInput(key!);
       setDraggingSlot(null);
     }
     target.addEventListener("pointermove", move);
@@ -390,6 +413,9 @@ export default function MemeEditor({
                 </div>
                 {long ? (
                   <textarea
+                    ref={(el) => {
+                      inputRefs.current[slot.key] = el;
+                    }}
                     value={v}
                     onChange={(e) =>
                       setCaptions((c) => ({ ...c, [slot.key]: e.target.value }))
@@ -400,6 +426,9 @@ export default function MemeEditor({
                   />
                 ) : (
                   <input
+                    ref={(el) => {
+                      inputRefs.current[slot.key] = el;
+                    }}
                     value={v}
                     onChange={(e) =>
                       setCaptions((c) => ({ ...c, [slot.key]: e.target.value }))
@@ -438,7 +467,7 @@ export default function MemeEditor({
                     </button>
                   </div>
 
-                  {/* Color swatches */}
+                  {/* Color swatches + custom picker */}
                   <div className="flex items-center gap-1.5 px-1">
                     {COLOR_SWATCHES.map((s) => {
                       const isActive =
@@ -455,6 +484,28 @@ export default function MemeEditor({
                         />
                       );
                     })}
+                    {/* Custom color picker — hidden native input behind a swatch */}
+                    <label
+                      title="pick any color"
+                      className="relative w-6 h-6 rounded-full border-2 border-[var(--line)] cursor-pointer overflow-hidden flex items-center justify-center"
+                      style={{
+                        background:
+                          "conic-gradient(from 0deg, #ff5436, #ffd23a, #c6f24e, #4ec1f2, #6e3aff, #ff5436)",
+                      }}
+                    >
+                      <input
+                        type="color"
+                        value={adj.color ?? "#ffffff"}
+                        onChange={(e) =>
+                          updateAdjust(slot.key, { color: e.target.value })
+                        }
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        aria-label="custom color"
+                      />
+                      <span className="relative text-[10px] font-bold text-ink mix-blend-difference">
+                        +
+                      </span>
+                    </label>
                   </div>
 
                   {/* X-axis nudge buttons (in addition to drag) */}
