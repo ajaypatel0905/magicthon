@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import UploadDropzone from "@/components/UploadDropzone";
 import HeroMeme from "@/components/HeroMeme";
 import LatestWall from "@/components/LatestWall";
+import LiveCounter from "@/components/LiveCounter";
+import TrySampleButton from "@/components/TrySampleButton";
 import MemePreview from "@/components/MemePreview";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
@@ -54,13 +56,13 @@ export default function Home() {
     <main className="relative">
       {/* NAV */}
       <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-[rgba(12,12,10,0.7)] px-4 py-3 backdrop-blur-md border-b border-[var(--line)]">
-        <Link href="/" className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg font-extrabold tracking-tight">
-          <span className="h-2.5 w-2.5 rounded-full bg-acid shadow-[0_0_16px_var(--acid)]" />
-          magicthon
-          <span className="ml-2 hidden sm:inline-block font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/45">
-            🪳 hyderabad / may 2026
-          </span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg font-extrabold tracking-tight">
+            <span className="h-2.5 w-2.5 rounded-full bg-acid shadow-[0_0_16px_var(--acid)]" />
+            magicthon
+          </Link>
+          <LiveCounter />
+        </div>
         <div className="flex items-center gap-1.5">
           <Link
             href="/wall"
@@ -100,6 +102,9 @@ export default function Home() {
             </p>
             <div className="hidden sm:block">
               <UploadDropzone />
+              <div className="mt-3">
+                <TrySampleButton />
+              </div>
             </div>
             <Link
               href="#upload"
@@ -107,6 +112,9 @@ export default function Home() {
             >
               drop a photo →
             </Link>
+            <div className="sm:hidden mt-3 text-center">
+              <TrySampleButton />
+            </div>
           </div>
 
           {/* Right: the meme itself, cycling */}
@@ -213,9 +221,12 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <SectionMeme kind="cta" className="mb-10" />
           <UploadDropzone />
-          <p className="text-center text-paper/45 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest mt-4">
-            png · jpg · webp · gif · up to 12 mb
-          </p>
+          <div className="text-center mt-4 flex flex-col items-center gap-2">
+            <p className="text-paper/45 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest">
+              png · jpg · webp · gif · up to 12 mb
+            </p>
+            <TrySampleButton />
+          </div>
         </div>
       </section>
 

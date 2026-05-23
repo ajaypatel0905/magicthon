@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MemePreview from "@/components/MemePreview";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
-// Big rotating demo memes — feels like scrolling a feed.
 const ROLL = [
   {
     photo: "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=900&q=85",
@@ -32,19 +31,49 @@ const ROLL = [
   },
 ] as const;
 
+const AUTO_MS = 4200;
+
+type Flyer = { id: number; emoji: string; left: number; drift: number };
+
 export default function HeroMeme() {
   const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [counts, setCounts] = useState<Record<number, Record<string, number>>>(
+    Object.fromEntries(ROLL.map((r, idx) => [idx, { ...r.reacts }])),
+  );
+  const [flyers, setFlyers] = useState<Flyer[]>([]);
+  const flyerId = useRef(0);
+
   useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % ROLL.length), 3400);
+    if (paused) return;
+    const t = setInterval(() => setI((n) => (n + 1) % ROLL.length), AUTO_MS);
     return () => clearInterval(t);
-  }, []);
+  }, [paused]);
+
+  function reactTo(emoji: string) {
+    setCounts((c) => ({
+      ...c,
+      [i]: { ...c[i], [emoji]: (c[i][emoji] ?? 0) + 1 },
+    }));
+    const id = ++flyerId.current;
+    // eslint-disable-next-line react-hooks/purity
+    const left = 20 + Math.random() * 60;
+    // eslint-disable-next-line react-hooks/purity
+    const drift = Math.random() > 0.5 ? 30 : -30;
+    setFlyers((fs) => [...fs, { id, emoji, left, drift }]);
+    setTimeout(() => setFlyers((fs) => fs.filter((f) => f.id !== id)), 1200);
+  }
 
   const d = ROLL[i];
   const tpl = TEMPLATE_BY_ID[d.template_id];
   if (!tpl) return null;
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div className="absolute -inset-4 rounded-2xl border border-[var(--line)] rotate-[-2.5deg] opacity-25" />
       <div className="absolute -inset-2 rounded-2xl border border-[var(--line)] rotate-[1.5deg] opacity-50" />
 
@@ -56,24 +85,69 @@ export default function HeroMeme() {
           captions={d.captions as Record<string, string>}
           className="!rounded-none"
         />
+
+        {/* Flying emojis */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {flyers.map((f) => (
+            <span
+              key={f.id}
+              className="absolute bottom-6 text-3xl"
+              style={{
+                left: `${f.left}%`,
+                animation: "fly-up 1.1s ease-out forwards",
+                ["--drift" as string]: `${f.drift}px`,
+              }}
+            >
+              {f.emoji}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Reaction strip — feels alive */}
+      {/* Reaction strip — clickable */}
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {Object.entries(d.reacts).map(([e, n]) => (
-          <span
+        {Object.entries(d.reacts).map(([e]) => (
+          <button
             key={e}
-            className="rounded-full border border-[var(--line)] bg-ink-2 px-2.5 py-1 text-xs flex items-center gap-1.5"
+            onClick={() => reactTo(e)}
+            className="rounded-full border border-[var(--line)] bg-ink-2 hover:border-acid/60 active:scale-95 transition px-2.5 py-1 text-xs flex items-center gap-1.5"
           >
             <span>{e}</span>
-            <span className="font-[family-name:var(--font-mono)] text-acid">{n}</span>
-          </span>
+            <span className="font-[family-name:var(--font-mono)] text-acid">
+              {counts[i]?.[e] ?? 0}
+            </span>
+          </button>
         ))}
         <span className="flex-1" />
-        <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/45">
-          live · {String(i + 1).padStart(2, "0")} / {String(ROLL.length).padStart(2, "0")}
-        </span>
+        <div className="flex gap-1">
+          {ROLL.map((_, n) => (
+            <button
+              key={n}
+              onClick={() => setI(n)}
+              aria-label={`go to demo ${n + 1}`}
+              className={`h-1.5 w-6 rounded-full transition ${
+                n === i ? "bg-acid" : "bg-paper/15 hover:bg-paper/30"
+              }`}
+            />
+          ))}
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fly-up {
+          from {
+            transform: translateY(0) scale(0.6);
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+          }
+          to {
+            transform: translate(var(--drift, 0), -200px) scale(1.4);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
