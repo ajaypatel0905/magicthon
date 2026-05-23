@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
 import LoadingTicker from "@/components/LoadingTicker";
@@ -68,17 +68,23 @@ export default function MemeEditor({
   const renderRef = useRef<HTMLDivElement>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | null>>({});
 
+  // On mount: scroll the preview into view so the user lands on the meme,
+  // not the caption-input section that lives below it on mobile.
+  useEffect(() => {
+    renderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   function focusSlotInput(key: string) {
     const el = inputRefs.current[key];
     if (!el) return;
-    el.focus();
-    // Select all text so a quick re-type is easy.
-    try {
-      el.setSelectionRange(0, el.value.length);
-    } catch {
-      /* ignore */
+    // On desktop the inputs are in the right column — focus is fine.
+    // On mobile the inputs are below the preview, so focusing would scroll
+    // the user away from the meme they're trying to edit visually.
+    // Only focus on desktop (≥ lg).
+    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+      el.focus();
+      try { el.setSelectionRange(0, el.value.length); } catch {}
     }
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function selectSlot(key: string) {
@@ -309,12 +315,22 @@ export default function MemeEditor({
     const startDy = existing.dy ?? 0;
     let didDrag = false;
 
+    let rafPending = false;
+    let pendingNx = startDx;
+    let pendingNy = startDy;
+    function flush() {
+      rafPending = false;
+      setPositions((p) => ({
+        ...p,
+        [key!]: { ...(p[key!] ?? {}), dx: pendingNx, dy: pendingNy },
+      }));
+    }
     function move(ev: PointerEvent) {
       const dxPx = ev.clientX - startX;
       const dyPx = ev.clientY - startY;
       // 8px slop — finger wobble doesn't accidentally trigger drag.
       if (!didDrag && Math.hypot(dxPx, dyPx) < 8) return;
-      if (!draggable) return; // Only impact templates support drag; tap still focuses input.
+      if (!draggable) return;
       if (!didDrag) {
         didDrag = true;
         setDraggingSlot(key!);
@@ -323,12 +339,12 @@ export default function MemeEditor({
       const dxPct = (dxPx / rect!.width) * 100;
       const dyPct = (dyPx / rect!.height) * 100;
       // Clamp tight — text stays inside the visible image area.
-      const nx = Math.max(-35, Math.min(35, startDx + dxPct));
-      const ny = Math.max(-40, Math.min(40, startDy + dyPct));
-      setPositions((p) => ({
-        ...p,
-        [key!]: { ...(p[key!] ?? {}), dx: nx, dy: ny },
-      }));
+      pendingNx = Math.max(-35, Math.min(35, startDx + dxPct));
+      pendingNy = Math.max(-40, Math.min(40, startDy + dyPct));
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(flush);
+      }
     }
     function up(ev: PointerEvent) {
       try { target!.releasePointerCapture(ev.pointerId); } catch {}
