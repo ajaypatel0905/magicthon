@@ -72,10 +72,16 @@ function SectionMeme({ kind, className = "" }: { kind: keyof typeof SECTION_MEME
 
 export default function Home() {
   return (
-    <main className="relative">
+    <main className="relative overflow-x-clip">
+      {/* Page-wide aurora — sits behind everything */}
+      <div className="aurora fixed inset-0">
+        <div className="aurora-blob" />
+      </div>
+      <div className="grain fixed inset-0" />
+
       {/* NAV */}
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-[rgba(12,12,10,0.7)] px-4 py-3 backdrop-blur-md border-b border-[var(--line)]">
-        <div className="flex items-center gap-4">
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-[rgba(12,12,10,0.55)] backdrop-blur-xl border-b border-[rgba(244,241,232,0.07)] px-4 py-3">
+        <div className="flex items-center gap-4 min-w-0">
           <Link href="/" className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg font-extrabold tracking-tight">
             <span className="h-2.5 w-2.5 rounded-full bg-acid shadow-[0_0_16px_var(--acid)]" />
             magicthon
@@ -85,70 +91,74 @@ export default function Home() {
         <div className="flex items-center gap-1.5">
           <Link
             href="/text"
-            className="hidden sm:inline-flex font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-sm"
+            className="hidden sm:inline-flex font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-md"
           >
             text mode
           </Link>
           <Link
             href="/wall"
-            className="font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-sm"
+            className="font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-md"
           >
             wall
           </Link>
           <Link
             href="#upload"
-            className="font-[family-name:var(--font-mono)] text-[12px] font-bold uppercase tracking-widest px-3 py-2 bg-acid text-ink rounded-sm hover:-translate-y-0.5 transition"
+            className="font-[family-name:var(--font-mono)] text-[12px] font-bold uppercase tracking-widest px-3 py-2 bg-acid text-ink rounded-md hover:-translate-y-0.5 transition shadow-[0_4px_16px_rgba(198,242,78,0.4)]"
           >
             drop photo →
           </Link>
         </div>
       </nav>
 
-      {/* HERO — meme dominates */}
-      <header className="relative min-h-[100svh] flex items-center pt-24 pb-12 px-4 overflow-hidden border-b border-[var(--line)]">
-        <div className="grain" />
-        <div className="absolute top-1/3 -left-32 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(255,84,54,0.16),transparent_62%)] blur-2xl pointer-events-none" />
-        <div className="absolute -top-44 -right-24 h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle,rgba(198,242,78,0.18),transparent_62%)] blur-2xl pointer-events-none" />
+      <div className="relative z-10">
 
-        <div className="relative z-[2] max-w-6xl mx-auto w-full grid lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-14 items-center">
+      {/* HERO */}
+      <header className="relative min-h-[100svh] flex items-center pt-24 pb-12 px-4">
+        <div className="relative max-w-6xl mx-auto w-full grid lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-14 items-center">
           {/* Left: wordmark + caption + dropzone */}
-          <div>
+          <div className="relative">
             <div className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.28em] uppercase opacity-60 mb-4">
               <RotatingText lines={HERO_EYEBROWS} intervalMs={4200} />
             </div>
-            <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.84] tracking-tighter text-[clamp(64px,16vw,180px)]">
+            <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.84] tracking-tighter text-[clamp(56px,15vw,168px)]">
               Make it
               <br />a <span className="text-acid">meme</span>.
             </h1>
-            <p className="font-[family-name:var(--font-display)] font-medium leading-[0.96] tracking-tight text-[clamp(20px,4.5vw,32px)] mt-6 mb-6 text-paper/85 min-h-[2.5em]">
+            <p className="font-[family-name:var(--font-display)] font-medium leading-[1.05] tracking-tight text-[clamp(18px,4vw,28px)] mt-6 mb-7 text-paper/85 min-h-[3em]">
               <RotatingText lines={HERO_TAGLINES} intervalMs={5000} />
             </p>
-            <div className="hidden sm:block">
+
+            {/* Glassy dropzone container */}
+            <div className="hidden sm:block glass rounded-2xl p-5">
               <UploadDropzone />
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <TrySampleButton />
                 <Link
                   href="/text"
-                  className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4 decoration-paper/30 hover:decoration-acid"
+                  className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4 decoration-paper/20 hover:decoration-acid"
                 >
                   no photo? try text mode →
                 </Link>
               </div>
             </div>
-            <Link
-              href="#upload"
-              className="sm:hidden block w-full text-center bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-4 rounded-sm"
-            >
-              drop a photo →
-            </Link>
-            <div className="sm:hidden mt-3 text-center flex flex-col items-center gap-2">
-              <TrySampleButton />
+
+            {/* Mobile compact CTAs */}
+            <div className="sm:hidden space-y-3">
               <Link
-                href="/text"
-                className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4"
+                href="#upload"
+                className="block w-full text-center bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-4 rounded-lg shadow-[0_6px_24px_rgba(198,242,78,0.35)]"
               >
-                no photo? try text mode →
+                drop a photo →
               </Link>
+              <div className="text-center flex flex-col items-center gap-2">
+                <TrySampleButton />
+                <Link
+                  href="/text"
+                  className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4"
+                >
+                  no photo? try text mode →
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -159,11 +169,11 @@ export default function Home() {
         </div>
       </header>
 
-      {/* MARQUEE — full of 🪳 because the cockroach is the moment */}
-      <div className="bg-acid text-ink overflow-hidden py-3 border-b border-[var(--line)]">
-        <div className="marquee-track flex w-max whitespace-nowrap font-[family-name:var(--font-display)] font-bold uppercase text-[16px] tracking-tight">
+      {/* MARQUEE */}
+      <div className="relative bg-acid text-ink overflow-hidden py-3 border-y border-[rgba(0,0,0,0.15)] shadow-[0_4px_24px_rgba(198,242,78,0.18)]">
+        <div className="marquee-track flex w-max whitespace-nowrap font-[family-name:var(--font-display)] font-bold uppercase text-[15px] sm:text-[16px] tracking-tight">
           {[...MARQUEE, ...MARQUEE, ...MARQUEE].map((a, i) => (
-            <span key={i} className="px-7 flex items-center gap-7">
+            <span key={i} className="px-6 sm:px-7 flex items-center gap-6 sm:gap-7">
               {a}
               <span className="text-[12px]">✦</span>
             </span>
@@ -171,12 +181,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* DIFF — section header is itself a meme */}
-      <section className="px-4 py-10 sm:py-14 border-b border-[var(--line)]">
+      {/* DIFF */}
+      <section className="px-4 py-12 sm:py-16">
         <div className="max-w-5xl mx-auto">
           <SectionMeme kind="diff" className="mb-8" />
-          <div className="grid sm:grid-cols-2 gap-0 border-t border-[var(--line)]">
-            <div className="border-b sm:border-r border-[var(--line)] p-5">
+          <div className="glass rounded-2xl grid sm:grid-cols-2 overflow-hidden">
+            <div className="border-b sm:border-b-0 sm:border-r border-[rgba(244,241,232,0.07)] p-6">
               <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/50 mb-3">
                 them
               </div>
@@ -184,11 +194,11 @@ export default function Home() {
                 <li>impact font, two text boxes</li>
                 <li>templates that ignore your photo</li>
                 <li>watermark on the bottom-right</li>
-                <li>signup wall for ‟social features”</li>
+                <li>signup wall for &lsquo;social features&rsquo;</li>
                 <li>captions that fit any photo</li>
               </ul>
             </div>
-            <div className="border-b border-[var(--line)] p-5">
+            <div className="p-6">
               <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-acid mb-3">
                 us
               </div>
@@ -204,10 +214,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* WALL — biggest section, the product as content */}
-      <section className="px-4 py-10 sm:py-14 border-b border-[var(--line)]">
+      {/* WALL */}
+      <section className="px-4 py-12 sm:py-16">
         <div className="max-w-6xl mx-auto">
-          <SectionMeme kind="wall" className="mb-10" />
+          <SectionMeme kind="wall" className="mb-8" />
           <div className="flex items-end justify-between gap-4 mb-6">
             <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(28px,5vw,52px)]">
               The wall.
@@ -225,13 +235,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* THE FLOW — visual recipe, less text */}
-      <section className="px-4 py-10 sm:py-12 border-b border-[var(--line)]">
+      {/* THE LOOP */}
+      <section className="px-4 py-12 sm:py-14">
         <div className="max-w-5xl mx-auto">
           <div className="font-[family-name:var(--font-mono)] text-[12px] text-acid uppercase tracking-widest mb-3">
             the loop
           </div>
-          <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(32px,6vw,64px)] mb-10">
+          <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(32px,6vw,64px)] mb-8">
             Drop → cook → ship → laugh.
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -241,7 +251,7 @@ export default function Home() {
               ["🎨", "edit", "swap templates. nudge text."],
               ["🔗", "ship", "link. anyone reacts."],
             ].map(([icon, t, sub]) => (
-              <div key={t} className="rounded-lg border border-[var(--line)] bg-ink-2/40 p-4 hover:border-acid/40 transition">
+              <div key={t} className="glass rounded-xl p-4 hover:border-acid/40 hover:-translate-y-1 transition">
                 <div className="text-3xl mb-2">{icon}</div>
                 <div className="font-[family-name:var(--font-display)] font-bold text-lg lowercase mb-0.5">{t}</div>
                 <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55">{sub}</div>
@@ -251,23 +261,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA section — meme + dropzone */}
-      <section id="upload" className="px-4 py-12 sm:py-16">
+      {/* CTA */}
+      <section id="upload" className="px-4 py-14 sm:py-20 scroll-mt-24">
         <div className="max-w-3xl mx-auto">
-          <SectionMeme kind="cta" className="mb-10" />
-          <UploadDropzone />
-          <div className="text-center mt-4 flex flex-col items-center gap-2">
-            <p className="text-paper/45 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest">
-              png · jpg · webp · gif · up to 12 mb
-            </p>
-            <TrySampleButton />
+          <SectionMeme kind="cta" className="mb-8" />
+          <div className="glass rounded-2xl p-5 sm:p-6">
+            <UploadDropzone />
+            <div className="text-center mt-4 flex flex-col items-center gap-2">
+              <p className="text-paper/45 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest">
+                png · jpg · webp · gif · up to 12 mb
+              </p>
+              <TrySampleButton />
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="px-4 py-8 border-t border-[var(--line)] text-paper/50 font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-center">
+      <footer className="px-4 py-8 border-t border-[rgba(244,241,232,0.07)] text-paper/50 font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-center">
         magicthon · 🪳 · hyderabad · made on build day
       </footer>
+
+      </div>
     </main>
   );
 }
