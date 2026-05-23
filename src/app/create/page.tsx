@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import MemePreview from "@/components/MemePreview";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
@@ -98,6 +99,7 @@ export default function CreatePage() {
           <SuggestionGrid
             photo={photo}
             suggestions={data.suggestions}
+            observations={data.observations}
             picked={picked}
             onPick={setPicked}
           />
@@ -183,14 +185,49 @@ function LoadingGrid({ photo }: { photo: string }) {
 function SuggestionGrid({
   photo,
   suggestions,
+  observations,
   picked,
   onPick,
 }: {
   photo: string;
   suggestions: Suggestion[];
+  observations: string[];
   picked: number | null;
   onPick: (i: number) => void;
 }) {
+  const router = useRouter();
+  const [shipping, setShipping] = useState(false);
+  const [shipError, setShipError] = useState<string | null>(null);
+
+  async function ship() {
+    if (picked === null) return;
+    setShipping(true);
+    setShipError(null);
+    try {
+      const s = suggestions[picked];
+      const res = await fetch("/api/memes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: photo,
+          template_id: s.template_id,
+          captions: s.captions,
+          observations,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setShipError(json.error ?? "couldn't save");
+        setShipping(false);
+        return;
+      }
+      router.push(json.url);
+    } catch (e) {
+      setShipError(e instanceof Error ? e.message : "network error");
+      setShipping(false);
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {suggestions.map((s, i) => {
@@ -223,15 +260,18 @@ function SuggestionGrid({
       {picked !== null && (
         <div className="col-span-full sticky bottom-3 sm:bottom-6 z-30">
           <div className="rounded-lg border border-acid bg-ink/95 backdrop-blur-md p-3 sm:p-4 flex items-center justify-between gap-3 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
-            <div className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/80">
-              picked: {TEMPLATE_BY_ID[suggestions[picked].template_id]?.name}
+            <div className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/80 truncate">
+              {shipping ? "shipping…" : `picked: ${TEMPLATE_BY_ID[suggestions[picked].template_id]?.name}`}
+              {shipError && (
+                <span className="text-hot block normal-case tracking-normal mt-1">{shipError}</span>
+              )}
             </div>
             <button
-              disabled
-              className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm opacity-60 cursor-not-allowed"
-              title="editor lands next"
+              onClick={ship}
+              disabled={shipping}
+              className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm disabled:opacity-60"
             >
-              edit → (next)
+              {shipping ? "…" : "ship it →"}
             </button>
           </div>
         </div>

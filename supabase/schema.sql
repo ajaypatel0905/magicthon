@@ -1,20 +1,19 @@
 -- Magicthon schema
--- Run this in Supabase SQL editor once after project provisions.
+-- Idempotent. Safe to re-run.
 
 -- 1. Storage bucket for uploaded photos + rendered memes.
---    Public bucket: anyone with the URL can view.
 insert into storage.buckets (id, name, public)
 values ('memes', 'memes', true)
 on conflict (id) do nothing;
 
--- Public read policy on the bucket.
-create policy if not exists "public read memes"
+-- Public read on the bucket.
+drop policy if exists "public read memes" on storage.objects;
+create policy "public read memes"
   on storage.objects for select
   using (bucket_id = 'memes');
 
--- Anonymous upload allowed (writes happen via service role from our server anyway,
--- but this lets the browser do direct uploads later if we want).
-create policy if not exists "anyone uploads memes"
+drop policy if exists "anyone uploads memes" on storage.objects;
+create policy "anyone uploads memes"
   on storage.objects for insert
   with check (bucket_id = 'memes');
 
@@ -34,17 +33,17 @@ create index if not exists memes_code_idx on public.memes (code);
 
 alter table public.memes enable row level security;
 
--- Anyone can read meme rows by code (public share links).
-create policy if not exists "public read memes rows"
+drop policy if exists "public read memes rows" on public.memes;
+create policy "public read memes rows"
   on public.memes for select
   using (true);
 
--- Anonymous inserts allowed (we'll move to server-side service role for prod hardening).
-create policy if not exists "anyone creates memes"
+drop policy if exists "anyone creates memes" on public.memes;
+create policy "anyone creates memes"
   on public.memes for insert
   with check (true);
 
--- 3. reactions table — append-only log of emoji reactions.
+-- 3. reactions table — append-only log.
 create table if not exists public.reactions (
   id          bigserial primary key,
   meme_id     uuid not null references public.memes(id) on delete cascade,
@@ -56,13 +55,23 @@ create index if not exists reactions_meme_idx on public.reactions (meme_id);
 
 alter table public.reactions enable row level security;
 
-create policy if not exists "public read reactions"
+drop policy if exists "public read reactions" on public.reactions;
+create policy "public read reactions"
   on public.reactions for select
   using (true);
 
-create policy if not exists "anyone reacts"
+drop policy if exists "anyone reacts" on public.reactions;
+create policy "anyone reacts"
   on public.reactions for insert
   with check (true);
 
--- 4. Enable realtime on reactions so the meme page can subscribe.
-alter publication supabase_realtime add table public.reactions;
+-- 4. Realtime for reactions.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'reactions'
+  ) then
+    alter publication supabase_realtime add table public.reactions;
+  end if;
+end $$;

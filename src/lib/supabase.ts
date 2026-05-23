@@ -19,3 +19,10 @@ export function supabaseService(): SupabaseClient | null {
   if (!url || !service) return null;
   return createClient(url, service, { auth: { persistSession: false } });
 }
+
+export const MEMES_BUCKET = "memes";
+
+export function publicStorageUrl(path: string): string {
+  if (!url) return "";
+  return `${url}/storage/v1/object/public/${MEMES_BUCKET}/${path}`;
+}
