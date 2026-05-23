@@ -6,12 +6,6 @@ import { TEMPLATE_BY_ID } from "@/lib/templates";
 
 const ROLL = [
   {
-    photo: "https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=900&q=85",
-    template_id: "top-bottom-impact",
-    captions: { top: "MY MANAGER: CAN WE SYNC FOR 5 MINS", bottom: "MY SOUL LEAVING THROUGH MY MOUTH" },
-    reacts: { "😂": 142, "💀": 38, "🔥": 21 },
-  },
-  {
     photo: "https://images.unsplash.com/photo-1573497019418-b400bb3ab074?w=900&q=85",
     template_id: "screenshot-quote",
     captions: { name: "LinkedIn at 8 AM", message: "humbled and excited to announce i will be taking over the rest of your careers, effective immediately" },
@@ -24,9 +18,9 @@ const ROLL = [
     reacts: { "🪳": 309, "😂": 88, "🔥": 12 },
   },
   {
-    photo: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900&q=85",
+    photo: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=900&q=85",
     template_id: "magazine-cover",
-    captions: { masthead: "TINY THREATS QUARTERLY", headline: "LOCAL FRESHER HEARS 'WE ARE A FAMILY HERE' IN FIRST WEEK", kicker: "reacts accordingly" },
+    captions: { masthead: "AGILE QUARTERLY", headline: "LOCAL MAN DESCRIBES PR REVIEW AS 'IN PROGRESS' FOR THIRD CONSECUTIVE MONDAY", kicker: "two comments. both his own." },
     reacts: { "😂": 174, "💀": 51 },
   },
 ] as const;

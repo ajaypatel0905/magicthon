@@ -47,11 +47,6 @@ const SECTION_MEMES = {
     template_id: "top-bottom-impact",
     captions: { top: "OTHER MEME TOOLS", bottom: "ARE STUCK IN 2009" },
   },
-  wall: {
-    photo: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=85",
-    template_id: "bottom-only",
-    captions: { bottom: "people are making memes RIGHT NOW. live." },
-  },
   cta: {
     // Official White House portrait — public domain. Self-hosted from /public.
     photo: "/trump.jpg",
@@ -218,7 +213,6 @@ export default function Home() {
       {/* WALL */}
       <section className="px-4 py-12 sm:py-16">
         <div className="max-w-6xl mx-auto">
-          <SectionMeme kind="wall" className="mb-8" />
           <div className="flex items-end justify-between gap-4 mb-6">
             <h2 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.92] tracking-tighter text-[clamp(28px,5vw,52px)]">
               The wall.
