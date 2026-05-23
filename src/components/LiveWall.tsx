@@ -83,6 +83,34 @@ export default function LiveWall({ initialMemes, initialCounts }: Props) {
     };
   }, []);
 
+  // Belt-and-braces poll every 30s: re-aggregate reaction counts for the
+  // visible memes. Catches anything realtime dropped (closed tabs, network blips).
+  useEffect(() => {
+    const sb = supabaseBrowser();
+    if (!sb) return;
+    let alive = true;
+    async function refresh() {
+      const ids = memes.map((m) => m.id);
+      if (ids.length === 0) return;
+      const { data, error } = await sb!
+        .from("reactions")
+        .select("meme_id, emoji")
+        .in("meme_id", ids);
+      if (!alive || error || !data) return;
+      const next: Record<string, Record<string, number>> = {};
+      for (const r of data as Array<{ meme_id: string; emoji: string }>) {
+        next[r.meme_id] ??= {};
+        next[r.meme_id][r.emoji] = (next[r.meme_id][r.emoji] ?? 0) + 1;
+      }
+      setCounts(next);
+    }
+    const t = setInterval(refresh, 30_000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [memes]);
+
   if (memes.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-[var(--line)] py-16 text-center text-paper/50 font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest">
