@@ -10,6 +10,7 @@ type Suggestion = {
   template_id: string;
   captions: Record<string, string>;
   why: string;
+  image_prompt?: string;
 };
 
 type Props = {
@@ -18,17 +19,25 @@ type Props = {
   initial: Suggestion;
   allSuggestions: Suggestion[];
   onBack: () => void;
+  /** Text mode = no real photo, gen'd background. Enables regen-background button. */
+  textMode?: boolean;
+  /** Optional topic for re-rolling captions in text mode. */
+  topic?: string;
 };
 
 export default function MemeEditor({
-  photo,
+  photo: initialPhoto,
   observations,
   initial,
   allSuggestions,
   onBack,
+  textMode = false,
+  topic,
 }: Props) {
   const router = useRouter();
 
+  const [photo, setPhoto] = useState<string>(initialPhoto);
+  const [imagePrompt] = useState<string>(initial.image_prompt ?? "");
   const [templateId, setTemplateId] = useState<string>(initial.template_id);
   const [captions, setCaptions] = useState<Record<string, string>>({
     ...initial.captions,
@@ -39,6 +48,8 @@ export default function MemeEditor({
   const [exporting, setExporting] = useState<"png" | "copy" | null>(null);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
   const [draggingSlot, setDraggingSlot] = useState<string | null>(null);
+  const [rerolling, setRerolling] = useState(false);
+  const [regenBg, setRegenBg] = useState(false);
 
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
@@ -71,6 +82,50 @@ export default function MemeEditor({
       }
     }
     setCaptions(next);
+  }
+
+  async function reroll() {
+    setRerolling(true);
+    try {
+      const res = await fetch("/api/reroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: templateId,
+          current_captions: captions,
+          ...(textMode ? { topic: topic ?? observations.join(", ") } : { image: photo }),
+          observations,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.captions) {
+        setCaptions(json.captions as Record<string, string>);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setRerolling(false);
+    }
+  }
+
+  async function regenerateBackground() {
+    if (!imagePrompt) return;
+    setRegenBg(true);
+    try {
+      const res = await fetch("/api/regen-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_prompt: imagePrompt, key: templateId }),
+      });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        setPhoto(json.url);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setRegenBg(false);
+    }
   }
 
   async function ship() {
@@ -210,6 +265,24 @@ export default function MemeEditor({
             ↕ drag the caption to position
           </p>
         )}
+        {textMode && imagePrompt && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button
+              onClick={regenerateBackground}
+              disabled={regenBg}
+              className="rounded-full border border-[var(--line)] hover:border-acid/60 disabled:opacity-60 px-3 py-1.5 text-[11px] font-[family-name:var(--font-mono)] uppercase tracking-widest flex items-center gap-1.5"
+            >
+              {regenBg ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-acid animate-pulse" />
+                  painting…
+                </>
+              ) : (
+                <>↻ regen background</>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
@@ -241,6 +314,26 @@ export default function MemeEditor({
 
         {/* Caption inputs */}
         <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/60">
+              captions
+            </span>
+            <button
+              onClick={reroll}
+              disabled={rerolling}
+              className="rounded-full border border-[var(--line)] hover:border-acid/60 disabled:opacity-60 px-3 py-1 text-[11px] font-[family-name:var(--font-mono)] uppercase tracking-widest flex items-center gap-1.5"
+              title="ask the model for a different take"
+            >
+              {rerolling ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-acid animate-pulse" />
+                  cooking…
+                </>
+              ) : (
+                <>↻ re-roll</>
+              )}
+            </button>
+          </div>
           {tpl.slots.map((slot) => {
             const v = captions[slot.key] ?? "";
             const long = (slot.maxChars ?? 80) > 60;

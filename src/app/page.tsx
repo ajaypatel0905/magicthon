@@ -6,7 +6,25 @@ import LatestWall from "@/components/LatestWall";
 import LiveCounter from "@/components/LiveCounter";
 import TrySampleButton from "@/components/TrySampleButton";
 import MemePreview from "@/components/MemePreview";
+import RotatingText from "@/components/RotatingText";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
+
+const HERO_TAGLINES = [
+  "your photo + a vision model + six ideas + one shareable link.",
+  "drop a photo. the model writes six. you pick. ship the link.",
+  "memes that actually reference your photo. revolutionary, we know.",
+  "Impact font, but with taste. bawa, light lo.",
+  "stop using meme generators from 2009.",
+  "six captions, one survivor. ship it live.",
+] as const;
+
+const HERO_EYEBROWS = [
+  "the meme tool you actually wanted",
+  "build day · ship it live",
+  "🪳 voted cockroach janta party",
+  "made in hyderabad · runs anywhere",
+  "no signup. no watermark. no excuses.",
+] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -95,16 +113,14 @@ export default function Home() {
           {/* Left: wordmark + caption + dropzone */}
           <div>
             <div className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.28em] uppercase opacity-60 mb-4">
-              the meme tool you actually wanted
+              <RotatingText lines={HERO_EYEBROWS} intervalMs={4200} />
             </div>
             <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.84] tracking-tighter text-[clamp(64px,16vw,180px)]">
               make it
               <br />a <span className="text-acid">meme</span>.
             </h1>
-            <p className="font-[family-name:var(--font-display)] font-medium leading-[0.96] tracking-tight text-[clamp(20px,4.5vw,32px)] mt-6 mb-6 text-paper/85">
-              your photo + a vision model + six ideas + one shareable link.
-              <br />
-              <span className="text-paper/55">that&apos;s the whole product. →</span>
+            <p className="font-[family-name:var(--font-display)] font-medium leading-[0.96] tracking-tight text-[clamp(20px,4.5vw,32px)] mt-6 mb-6 text-paper/85 min-h-[2.5em]">
+              <RotatingText lines={HERO_TAGLINES} intervalMs={5000} />
             </p>
             <div className="hidden sm:block">
               <UploadDropzone />

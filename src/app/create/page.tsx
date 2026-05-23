@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import MemePreview from "@/components/MemePreview";
 import MemeEditor from "@/components/MemeEditor";
+import LoadingTicker from "@/components/LoadingTicker";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
 type Suggestion = {
@@ -106,11 +107,17 @@ export default function CreatePage() {
           ← back
         </Link>
         <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-2 tracking-tight">
-          {loading ? "Reading your photo…" : data ? "Pick one." : "Cooking your six."}
+          {loading ? "Cooking your six." : data ? "Pick one." : "Drop a photo."}
         </h1>
+        {loading && (
+          <div className="mb-6">
+            <LoadingTicker variant="cook" />
+          </div>
+        )}
         {data && (
           <p className="text-paper/70 mb-6 text-sm sm:text-base">
-            What I see: {data.observations.join(" · ")}
+            <span className="text-paper/40">model saw:</span>{" "}
+            {data.observations.join(" · ")}
           </p>
         )}
 
@@ -171,12 +178,12 @@ export default function CreatePage() {
 function NoPhoto() {
   return (
     <div className="rounded-lg border border-[var(--line)] p-8 text-center mt-6">
-      <p className="text-paper/70 mb-4">No photo yet.</p>
+      <p className="text-paper/70 mb-4">kya re miya — no photo yet.</p>
       <Link
         href="/"
         className="inline-block bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm"
       >
-        ← upload one
+        ← drop one
       </Link>
     </div>
   );
@@ -201,14 +208,14 @@ function ErrorCard({
       />
       <div className="rounded-lg border border-hot/40 bg-[rgba(255,84,54,0.05)] p-5">
         <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-hot mb-2">
-          model said no
+          model said nakko
         </div>
         <p className="text-paper/80 text-sm break-words">{message}</p>
         <button
           onClick={onRetry}
           className="mt-4 inline-block bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm"
         >
-          try again
+          ek aur try →
         </button>
       </div>
     </div>
@@ -230,10 +237,10 @@ function LoadingGrid({ photo }: { photo: string }) {
             key={i}
             className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden"
           >
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]" />
-            <div className="absolute bottom-2 left-2 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/40">
-              cooking…
-            </div>
+            <div
+              className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]"
+              style={{ animationDelay: `${i * 130}ms` }}
+            />
           </div>
         ))}
       </div>

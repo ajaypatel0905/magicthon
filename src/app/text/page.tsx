@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import MemePreview from "@/components/MemePreview";
+import MemeEditor from "@/components/MemeEditor";
+import LoadingTicker from "@/components/LoadingTicker";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
 type Suggestion = {
@@ -11,6 +12,7 @@ type Suggestion = {
   captions: Record<string, string>;
   why: string;
   background: string;
+  image_prompt?: string;
 };
 
 const EXAMPLES = [
@@ -21,15 +23,36 @@ const EXAMPLES = [
   "manager said \"can we sync\"",
   "voted cockroach janta party because",
   "first day at the service-based company",
+  "Sharma ji ka beta switched companies again",
+  "appraisal cycle anxiety",
+  "ORR traffic at 8am",
+  "what 'ownership' really means in office",
+  "fresher's first PR review",
+  "Paradise vs Bawarchi argument",
+  "WFH but the chai is mid",
+  "auntie at the wedding judging your salary",
+  "RCB winning the IPL",
+  "calling in 'sick' on a Friday",
+  "the gym membership in March",
+  "exam result day at home",
+  "uber driver asking which route",
 ];
 
+function pickN<T>(arr: T[], n: number, seed = 0): T[] {
+  // Pick a stable window starting at seed; rotate through the array.
+  const out: T[] = [];
+  for (let i = 0; i < n; i++) out.push(arr[(seed + i) % arr.length]);
+  return out;
+}
+
 export default function TextPage() {
-  const router = useRouter();
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ topic: string; suggestions: Suggestion[] } | null>(null);
-  const [shipping, setShipping] = useState<number | null>(null);
+  const [exampleSeed, setExampleSeed] = useState(0);
+  const visibleExamples = pickN(EXAMPLES, 4, exampleSeed);
+  const [picked, setPicked] = useState<number | null>(null);
 
   async function generate(t: string) {
     if (!t.trim()) return;
@@ -52,33 +75,6 @@ export default function TextPage() {
       setError(e instanceof Error ? e.message : "network error");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function ship(i: number) {
-    if (!data) return;
-    setShipping(i);
-    try {
-      const s = data.suggestions[i];
-      const res = await fetch("/api/memes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: s.background,
-          template_id: s.template_id,
-          captions: s.captions,
-          observations: [data.topic],
-        }),
-      });
-      const json = await res.json();
-      if (res.ok) router.push(json.url);
-      else {
-        setError(json.error ?? "couldn't save");
-        setShipping(null);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "network error");
-      setShipping(null);
     }
   }
 
@@ -122,13 +118,13 @@ export default function TextPage() {
               disabled={loading || !topic.trim()}
               className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-sm disabled:opacity-60"
             >
-              {loading ? "cooking…" : "cook six →"}
+              {loading ? "cooking bawa…" : "cook six →"}
             </button>
             <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45">
               or try:
             </span>
-            <div className="flex flex-wrap gap-1.5">
-              {EXAMPLES.slice(0, 4).map((e) => (
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {visibleExamples.map((e) => (
                 <button
                   key={e}
                   type="button"
@@ -136,11 +132,19 @@ export default function TextPage() {
                     setTopic(e);
                     void generate(e);
                   }}
-                  className="rounded-full border border-[var(--line)] hover:border-acid/60 px-2.5 py-1 text-xs"
+                  className="rounded-full border border-[var(--line)] hover:border-acid/60 px-2.5 py-1 text-xs float-in"
                 >
                   {e}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setExampleSeed((s) => (s + 4) % EXAMPLES.length)}
+                aria-label="show different examples"
+                className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/50 hover:text-acid px-2"
+              >
+                ↻ more
+              </button>
             </div>
           </div>
         </form>
@@ -153,9 +157,11 @@ export default function TextPage() {
 
         {loading && (
           <div className="mt-8">
-            <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55 mb-3 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-acid animate-pulse" />
-              writing six captions · generating six images · ~20s
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <LoadingTicker variant="cook" />
+              <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/35">
+                · captions + 6 images · ~30s
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, n) => (
@@ -167,13 +173,20 @@ export default function TextPage() {
                     className="absolute inset-0 bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)] animate-pulse"
                     style={{ animationDelay: `${n * 150}ms` }}
                   />
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <LoadingTicker
+                      variant={n % 2 ? "paint" : "cook"}
+                      intervalMs={2800 + n * 200}
+                      className="!text-[9px]"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {data && (
+        {data && picked === null && (
           <div className="mt-10">
             <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55 mb-4">
               ← topic · {data.topic}
@@ -182,38 +195,43 @@ export default function TextPage() {
               {data.suggestions.map((s, i) => {
                 const tpl = TEMPLATE_BY_ID[s.template_id];
                 if (!tpl) return null;
-                const busy = shipping === i;
                 return (
-                  <div
+                  <button
                     key={i}
-                    className="rounded-lg p-1.5 ring-1 ring-[var(--line)] hover:ring-acid/60 transition"
+                    onClick={() => setPicked(i)}
+                    className="text-left rounded-lg p-1.5 ring-1 ring-[var(--line)] hover:ring-acid/60 transition"
                   >
                     <MemePreview
                       template={tpl}
                       photo={s.background}
                       captions={s.captions}
                     />
-                    <div className="px-2 py-2 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-acid">
-                          {tpl.name}
-                        </div>
-                        {s.why && (
-                          <div className="text-xs text-paper/55 truncate">{s.why}</div>
-                        )}
+                    <div className="px-2 py-2">
+                      <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-acid mb-1">
+                        {tpl.name}
                       </div>
-                      <button
-                        onClick={() => ship(i)}
-                        disabled={busy}
-                        className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm disabled:opacity-60 whitespace-nowrap"
-                      >
-                        {busy ? "…" : "ship →"}
-                      </button>
+                      {s.why && (
+                        <div className="text-xs text-paper/55 line-clamp-2">{s.why}</div>
+                      )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {data && picked !== null && (
+          <div className="mt-8">
+            <MemeEditor
+              photo={data.suggestions[picked].background}
+              observations={[data.topic]}
+              initial={data.suggestions[picked]}
+              allSuggestions={data.suggestions}
+              onBack={() => setPicked(null)}
+              textMode
+              topic={data.topic}
+            />
           </div>
         )}
       </div>
