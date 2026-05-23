@@ -74,6 +74,23 @@ export default function MemeEditor({
     renderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  // Click outside selected text + its handles → deselect.
+  useEffect(() => {
+    if (!selectedSlot) return;
+    function onDocPointerDown(e: PointerEvent) {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      // Keep selection alive when interacting with the slot itself or with
+      // any element belonging to the selection overlay (handles, label).
+      if (target.closest("[data-slot]")) return;
+      if (target.closest("[data-selection-element]")) return;
+      setSelectedSlot(null);
+      setSlotBox(null);
+    }
+    document.addEventListener("pointerdown", onDocPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocPointerDown);
+  }, [selectedSlot]);
+
   function focusSlotInput(key: string) {
     const el = inputRefs.current[key];
     if (!el) return;
@@ -846,6 +863,7 @@ function SelectionOverlay({
       />
       {/* slot label + close */}
       <div
+        data-selection-element
         className="absolute z-30 pointer-events-auto font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest bg-acid text-ink px-2 py-0.5 rounded-sm flex items-center gap-2 shadow-md"
         style={{ left: box.left - PAD, top: Math.max(0, box.top - 22) }}
       >
@@ -865,6 +883,7 @@ function SelectionOverlay({
       {corners.map((c) => (
         <div
           key={c.key}
+          data-selection-element
           onPointerDown={makeHandleDown(c.cx, c.cy)}
           className={`absolute z-30 flex items-center justify-center select-none ${c.cursor}`}
           style={{
