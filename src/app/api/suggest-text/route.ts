@@ -2,46 +2,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { callOpenRouter, MODELS } from "@/lib/openrouter";
 import { TEMPLATES, TEMPLATE_BY_ID } from "@/lib/templates";
-import { supabaseService, MEMES_BUCKET, publicStorageUrl } from "@/lib/supabase";
+import { generateAndStoreImage } from "@/lib/imagen";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-function pollinationsUrl(prompt: string, seed: number): string {
-  // Pollinations + Flux. Slow first request (~20-40s) but cached after.
-  const encoded = encodeURIComponent(prompt);
-  return `https://image.pollinations.ai/prompt/${encoded}?width=768&height=768&model=flux&nologo=true&enhance=true&seed=${seed}`;
-}
-
-async function fetchOne(url: string, timeoutMs: number): Promise<ArrayBuffer | null> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal, redirect: "follow" });
-    if (!res.ok) return null;
-    const buf = await res.arrayBuffer();
-    if (buf.byteLength < 1000) return null; // too small = error page
-    return buf;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-async function storeOne(buf: ArrayBuffer, key: string): Promise<string | null> {
-  const sb = supabaseService();
-  if (!sb) return null;
-  const path = `text/${key}.jpg`;
-  const up = await sb.storage
-    .from(MEMES_BUCKET)
-    .upload(path, new Uint8Array(buf), {
-      contentType: "image/jpeg",
-      upsert: true,
-    });
-  if (up.error) return null;
-  return publicStorageUrl(path);
-}
+// Fallback gradients in case image generation fails entirely.
+const FALLBACK_GRADIENTS = [
+  "linear-gradient(135deg, #1a1a16 0%, #2a2f3f 100%)",
+  "linear-gradient(135deg, #14140e 0%, #3a3f2a 100%)",
+  "linear-gradient(135deg, #1f0d0d 0%, #ff5436 220%)",
+  "linear-gradient(135deg, #0c0c0a 0%, #c6f24e 320%)",
+  "linear-gradient(135deg, #15150f 0%, #4a3a1a 100%)",
+  "linear-gradient(135deg, #0a0a14 0%, #6e3aff 220%)",
+];
 
 const SuggestionSchema = z.object({
   template_id: z.string(),
@@ -165,33 +139,33 @@ export async function POST(req: Request) {
       image_prompt: string;
     };
     const cleaned: Suggestion[] = [];
-    const tasks: Array<{ index: number; seed: number; template_id: string; url: string }> = [];
+    const keys: string[] = [];
     for (const s of validated.suggestions) {
       if (seen.has(s.template_id)) continue;
       const c = clampSuggestion(s);
       if (!c) continue;
       const seed =
         Math.abs([...topic + c.template_id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 0)) % 1_000_000;
-      const url = pollinationsUrl(c.image_prompt, seed);
       seen.add(c.template_id);
-      const idx = cleaned.length;
-      cleaned.push({ ...c, background: url });
-      tasks.push({ index: idx, seed, template_id: c.template_id, url });
+      keys.push(`${seed}-${c.template_id}`);
+      cleaned.push({ ...c, background: "" });
       if (cleaned.length >= 6) break;
     }
 
-    // Race per-image: if we can fetch + store within ~25s, swap to the Supabase URL.
-    // Anything slower stays on the Pollinations URL; the client's shimmer handles the wait.
-    const cacheDeadline = 25_000;
-    const cached = await Promise.all(
-      tasks.map(async (t) => {
-        const buf = await fetchOne(t.url, cacheDeadline);
-        if (!buf) return null;
-        return storeOne(buf, `${t.seed}-${t.template_id}`);
-      }),
+    // Generate all images in parallel via Gemini 2.5 Flash Image (OpenRouter).
+    // ~3-5s each, ~6-10s total for the batch. Cap the whole batch at 50s as a safety net.
+    const ctrl = new AbortController();
+    const deadline = setTimeout(() => ctrl.abort(), 50_000);
+    const generated = await Promise.all(
+      cleaned.map((s, i) =>
+        generateAndStoreImage(s.image_prompt, keys[i], ctrl.signal),
+      ),
     );
-    for (let i = 0; i < cached.length; i++) {
-      if (cached[i]) cleaned[i].background = cached[i]!;
+    clearTimeout(deadline);
+
+    for (let i = 0; i < cleaned.length; i++) {
+      cleaned[i].background =
+        generated[i] ?? FALLBACK_GRADIENTS[i % FALLBACK_GRADIENTS.length];
     }
 
     return NextResponse.json({ topic, suggestions: cleaned });

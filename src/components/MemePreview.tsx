@@ -244,6 +244,14 @@ function Frame({
   );
 }
 
+// Hosts we trust to load fast. For these, render the <img> directly with no
+// shimmer — eliminates the "loading" feel on the landing page and wall.
+const FAST_HOSTS = ["images.unsplash.com", "supabase.co"];
+
+function isFastUrl(src: string): boolean {
+  return FAST_HOSTS.some((h) => src.includes(h));
+}
+
 function PhotoLayer({
   src,
   className = "",
@@ -251,7 +259,7 @@ function PhotoLayer({
   src: string;
   className?: string;
 }) {
-  // Support text-mode: `src` may be a CSS gradient instead of an image URL.
+  // Text-mode fallback: src may be a CSS gradient.
   if (src.startsWith("linear-gradient") || src.startsWith("radial-gradient")) {
     return (
       <div
@@ -261,9 +269,24 @@ function PhotoLayer({
       />
     );
   }
+
+  // Trusted-fast URL: render directly, no shimmer overlay.
+  if (isFastUrl(src)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        className={`absolute inset-0 w-full h-full object-cover ${className}`}
+        draggable={false}
+      />
+    );
+  }
+
+  // Slow / unknown host (e.g. Pollinations cold-start): shimmer behind, fade in.
   return (
     <>
-      {/* Shimmer placeholder shown until the image paints. */}
       <div
         className={`absolute inset-0 w-full h-full bg-gradient-to-br from-[#1a1a14] via-[#22221c] to-[#15150f] animate-pulse ${className}`}
         aria-hidden
@@ -279,7 +302,6 @@ function PhotoLayer({
           (e.currentTarget as HTMLImageElement).style.opacity = "1";
         }}
         onError={(e) => {
-          // On failure, leave the shimmer as the background.
           (e.currentTarget as HTMLImageElement).style.display = "none";
         }}
       />
