@@ -62,6 +62,15 @@ export default function TextPage() {
   }
 
   useEffect(() => {
+    // Restore picked from current history state on mount (e.g., after
+    // hitting browser back from /m).
+    if (typeof window !== "undefined") {
+      const s = window.history.state as { mt_picked?: number } | null;
+      if (s && typeof s.mt_picked === "number") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPicked(s.mt_picked);
+      }
+    }
     function onPop(e: PopStateEvent) {
       const s = e.state as { mt_picked?: number } | null;
       setPicked(s && typeof s.mt_picked === "number" ? s.mt_picked : null);

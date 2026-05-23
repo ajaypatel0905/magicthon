@@ -60,6 +60,15 @@ export default function CreatePage() {
     if (p && cached && cached.photo === p) {
       setData(cached.data);
     }
+    // If we navigated back to this page from /m, the history entry still
+    // carries the meme we were editing — restore it so one "back" press
+    // lands directly in the editor.
+    if (typeof window !== "undefined") {
+      const s = window.history.state as { mt_picked?: number } | null;
+      if (s && typeof s.mt_picked === "number") {
+        setPicked(s.mt_picked);
+      }
+    }
     setHydrated(true);
     function onPop(e: PopStateEvent) {
       const s = e.state as { mt_picked?: number } | null;
