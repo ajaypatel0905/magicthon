@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 import { z } from "zod";
 import { supabaseService, MEMES_BUCKET, publicStorageUrl } from "@/lib/supabase";
+
+// No confusable chars (no 0/o/l/i/1) for readable share codes.
+const makeCode = customAlphabet("abcdefghkmnpqrstuvwxyz23456789", 6);
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
   }
   const { image, template_id, captions, observations } = parsed.data;
 
-  const code = nanoid(6).toLowerCase();
+  const code = makeCode();
   let photoUrl: string;
 
   if (image.startsWith("data:")) {
