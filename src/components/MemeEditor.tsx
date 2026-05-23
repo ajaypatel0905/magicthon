@@ -750,7 +750,7 @@ export default function MemeEditor({
   );
 }
 
-/** Canva-style dashed selection box with corner resize handle. */
+/** Canva-style dashed selection box with 4 corner resize handles. */
 function SelectionOverlay({
   slotKey,
   box,
@@ -764,50 +764,62 @@ function SelectionOverlay({
   onResize: (next: number) => void;
   onClose: () => void;
 }) {
-  function onHandleDown(e: React.PointerEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const target = e.currentTarget as HTMLDivElement;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startScale = currentScale || 1;
-    const baseDiag = Math.hypot(box.width, box.height);
-    try { target.setPointerCapture(e.pointerId); } catch {}
-    function move(ev: PointerEvent) {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      const delta = (dx + dy) / 2;
-      const factor = 1 + delta / (baseDiag * 0.5);
-      const next = Math.max(0.5, Math.min(2.5, startScale * factor));
-      onResize(+next.toFixed(2));
-    }
-    function up(ev: PointerEvent) {
-      try { target.releasePointerCapture(ev.pointerId); } catch {}
-      target.removeEventListener("pointermove", move);
-      target.removeEventListener("pointerup", up);
-      target.removeEventListener("pointercancel", up);
-    }
-    target.addEventListener("pointermove", move);
-    target.addEventListener("pointerup", up);
-    target.addEventListener("pointercancel", up);
+  const PAD = 6;
+  const corners = [
+    { key: "tl", cx: -1, cy: -1, left: box.left - PAD, top: box.top - PAD, cursor: "cursor-nwse-resize" },
+    { key: "tr", cx: 1, cy: -1, left: box.left + box.width + PAD, top: box.top - PAD, cursor: "cursor-nesw-resize" },
+    { key: "bl", cx: -1, cy: 1, left: box.left - PAD, top: box.top + box.height + PAD, cursor: "cursor-nesw-resize" },
+    { key: "br", cx: 1, cy: 1, left: box.left + box.width + PAD, top: box.top + box.height + PAD, cursor: "cursor-nwse-resize" },
+  ] as const;
+
+  function makeHandleDown(cx: number, cy: number) {
+    return (e: React.PointerEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const target = e.currentTarget as HTMLDivElement;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startScale = currentScale || 1;
+      const baseDiag = Math.hypot(box.width, box.height) || 100;
+      try { target.setPointerCapture(e.pointerId); } catch {}
+      function move(ev: PointerEvent) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        // "outward" relative to the corner = enlarge, "inward" = shrink
+        const delta = (dx * cx + dy * cy) / 2;
+        const factor = 1 + delta / (baseDiag * 0.5);
+        const next = Math.max(0.5, Math.min(2.5, startScale * factor));
+        onResize(+next.toFixed(2));
+      }
+      function up(ev: PointerEvent) {
+        try { target.releasePointerCapture(ev.pointerId); } catch {}
+        target.removeEventListener("pointermove", move);
+        target.removeEventListener("pointerup", up);
+        target.removeEventListener("pointercancel", up);
+      }
+      target.addEventListener("pointermove", move);
+      target.addEventListener("pointerup", up);
+      target.addEventListener("pointercancel", up);
+    };
   }
+
   return (
     <>
       {/* dashed selection box */}
       <div
         className="absolute pointer-events-none border-2 border-dashed border-acid rounded-sm z-30"
         style={{
-          left: box.left - 6,
-          top: box.top - 6,
-          width: box.width + 12,
-          height: box.height + 12,
+          left: box.left - PAD,
+          top: box.top - PAD,
+          width: box.width + PAD * 2,
+          height: box.height + PAD * 2,
         }}
         aria-hidden
       />
-      {/* slot label */}
+      {/* slot label + close */}
       <div
-        className="absolute z-30 pointer-events-auto font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest bg-acid text-ink px-2 py-0.5 rounded-sm flex items-center gap-2"
-        style={{ left: box.left - 6, top: Math.max(0, box.top - 22) }}
+        className="absolute z-30 pointer-events-auto font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest bg-acid text-ink px-2 py-0.5 rounded-sm flex items-center gap-2 shadow-md"
+        style={{ left: box.left - PAD, top: Math.max(0, box.top - 22) }}
       >
         <span>{slotKey}</span>
         <button
@@ -821,21 +833,24 @@ function SelectionOverlay({
           ×
         </button>
       </div>
-      {/* corner resize handle — big tap target on phone */}
-      <div
-        onPointerDown={onHandleDown}
-        className="absolute z-30 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize select-none"
-        style={{
-          left: box.left + box.width + 6,
-          top: box.top + box.height + 6,
-          width: 36,
-          height: 36,
-          touchAction: "none",
-        }}
-        title="drag to resize"
-      >
-        <span className="block w-5 h-5 bg-acid border-2 border-ink rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-      </div>
+      {/* 4 corner resize handles */}
+      {corners.map((c) => (
+        <div
+          key={c.key}
+          onPointerDown={makeHandleDown(c.cx, c.cy)}
+          className={`absolute z-30 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none ${c.cursor}`}
+          style={{
+            left: c.left,
+            top: c.top,
+            width: 32,
+            height: 32,
+            touchAction: "none",
+          }}
+          title="drag to resize"
+        >
+          <span className="block w-4 h-4 bg-acid border-2 border-ink rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+        </div>
+      ))}
     </>
   );
 }

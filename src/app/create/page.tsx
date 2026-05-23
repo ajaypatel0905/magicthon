@@ -43,6 +43,15 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
 
+  // Browser back from the editor should return to the 6-card grid, not /.
+  // We push a history entry on pick, and listen for popstate to clear it.
+  function pickMeme(i: number) {
+    setPicked(i);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ mt_picked: i }, "");
+    }
+  }
+
   useEffect(() => {
     const p = sessionStorage.getItem("magicthon:upload");
     const cached = readCache();
@@ -52,6 +61,12 @@ export default function CreatePage() {
       setData(cached.data);
     }
     setHydrated(true);
+    function onPop(e: PopStateEvent) {
+      const s = e.state as { mt_picked?: number } | null;
+      setPicked(s && typeof s.mt_picked === "number" ? s.mt_picked : null);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   useEffect(() => {
@@ -160,7 +175,7 @@ export default function CreatePage() {
             photo={photo}
             suggestions={data.suggestions}
             picked={picked}
-            onPick={setPicked}
+            onPick={pickMeme}
           />
         )}
 
@@ -171,7 +186,13 @@ export default function CreatePage() {
               observations={data.observations}
               initial={data.suggestions[picked]}
               allSuggestions={data.suggestions}
-              onBack={() => setPicked(null)}
+              onBack={() => {
+                if (typeof window !== "undefined" && window.history.state?.mt_picked !== undefined) {
+                  window.history.back();
+                } else {
+                  setPicked(null);
+                }
+              }}
             />
           </div>
         )}

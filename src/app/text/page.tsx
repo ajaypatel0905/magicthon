@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import MemePreview from "@/components/MemePreview";
 import MemeEditor from "@/components/MemeEditor";
@@ -53,6 +53,22 @@ export default function TextPage() {
   const [exampleSeed, setExampleSeed] = useState(0);
   const visibleExamples = pickN(EXAMPLES, 4, exampleSeed);
   const [picked, setPicked] = useState<number | null>(null);
+
+  function pickMeme(i: number) {
+    setPicked(i);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ mt_picked: i }, "");
+    }
+  }
+
+  useEffect(() => {
+    function onPop(e: PopStateEvent) {
+      const s = e.state as { mt_picked?: number } | null;
+      setPicked(s && typeof s.mt_picked === "number" ? s.mt_picked : null);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   async function generate(t: string) {
     if (!t.trim()) return;
@@ -195,7 +211,7 @@ export default function TextPage() {
                 return (
                   <button
                     key={i}
-                    onClick={() => setPicked(i)}
+                    onClick={() => pickMeme(i)}
                     className="text-left rounded-lg p-1.5 ring-1 ring-[var(--line)] hover:ring-acid/60 transition"
                   >
                     <MemePreview
@@ -225,7 +241,13 @@ export default function TextPage() {
               observations={[data.topic]}
               initial={data.suggestions[picked]}
               allSuggestions={data.suggestions}
-              onBack={() => setPicked(null)}
+              onBack={() => {
+                if (typeof window !== "undefined" && window.history.state?.mt_picked !== undefined) {
+                  window.history.back();
+                } else {
+                  setPicked(null);
+                }
+              }}
               textMode
               topic={data.topic}
             />
