@@ -7,8 +7,16 @@ type Props = {
   template: Template;
   photo: string;
   captions: Record<string, string>;
+  /** Per-slot Y-axis offset in % of container height. */
+  positions?: Record<string, { dy: number }>;
   className?: string;
 };
+
+function slotStyle(positions: Props["positions"], key: string): React.CSSProperties {
+  const p = positions?.[key];
+  if (!p?.dy) return {};
+  return { transform: `translateY(${p.dy}%)` };
+}
 
 // Impact-style outlined caption used by classic memes
 function ImpactText({
@@ -31,6 +39,7 @@ export default function MemePreview({
   template,
   photo,
   captions,
+  positions,
   className = "",
 }: Props) {
   const c = useMemo(() => {
@@ -46,10 +55,18 @@ export default function MemePreview({
       return (
         <Frame className={className}>
           <PhotoLayer src={photo} />
-          <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3">
+          <div
+            data-slot="top"
+            style={slotStyle(positions, "top")}
+            className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 touch-none"
+          >
             <ImpactText text={c.top} className="text-[clamp(18px,5.5cqw,40px)] max-w-[95%]" />
           </div>
-          <div className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-3">
+          <div
+            data-slot="bottom"
+            style={slotStyle(positions, "bottom")}
+            className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-3 touch-none"
+          >
             <ImpactText text={c.bottom} className="text-[clamp(18px,5.5cqw,40px)] max-w-[95%]" />
           </div>
         </Frame>
@@ -59,7 +76,11 @@ export default function MemePreview({
       return (
         <Frame className={className}>
           <PhotoLayer src={photo} />
-          <div className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-4">
+          <div
+            data-slot="bottom"
+            style={slotStyle(positions, "bottom")}
+            className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-4 touch-none"
+          >
             <ImpactText text={c.bottom} className="text-[clamp(20px,6cqw,44px)] max-w-[95%]" />
           </div>
         </Frame>
