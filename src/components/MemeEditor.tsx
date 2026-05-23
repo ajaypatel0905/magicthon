@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toPng } from "html-to-image";
 import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
 import { TEMPLATES, TEMPLATE_BY_ID, type Template } from "@/lib/templates";
 
@@ -166,6 +165,9 @@ export default function MemeEditor({
 
   async function exportPng(): Promise<Blob | null> {
     if (!renderRef.current) return null;
+    // Lazy-load html-to-image only when user actually exports — saves the
+    // ~20kB chunk on every other page (and the editor itself on first paint).
+    const { toPng } = await import("html-to-image");
     const dataUrl = await toPng(renderRef.current, {
       cacheBust: true,
       pixelRatio: 2,
@@ -290,7 +292,7 @@ export default function MemeEditor({
         </div>
         {draggable && (
           <p className="mt-3 text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45">
-            ↕ drag the caption to position
+            ↕↔ drag the caption to position
           </p>
         )}
         {textMode && imagePrompt && (
@@ -406,7 +408,7 @@ export default function MemeEditor({
                     className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
                   />
                 )}
-                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
                   {/* Size controls */}
                   <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
                     <button
@@ -416,11 +418,11 @@ export default function MemeEditor({
                         })
                       }
                       title="smaller"
-                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                      className="px-3 py-1.5 text-xs hover:bg-ink-2 min-w-9"
                     >
                       A−
                     </button>
-                    <span className="font-[family-name:var(--font-mono)] text-[10px] px-1 text-paper/45 select-none">
+                    <span className="font-[family-name:var(--font-mono)] text-[10px] px-1.5 text-paper/45 select-none border-x border-[var(--line)]">
                       {((adj.scale ?? 1) * 100).toFixed(0)}%
                     </span>
                     <button
@@ -430,14 +432,14 @@ export default function MemeEditor({
                         })
                       }
                       title="bigger"
-                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                      className="px-3 py-1.5 text-xs hover:bg-ink-2 min-w-9"
                     >
                       A+
                     </button>
                   </div>
 
                   {/* Color swatches */}
-                  <div className="flex items-center gap-1 px-1">
+                  <div className="flex items-center gap-1.5 px-1">
                     {COLOR_SWATCHES.map((s) => {
                       const isActive =
                         (adj.color ?? "#ffffff").toLowerCase() === s.value.toLowerCase();
@@ -446,8 +448,8 @@ export default function MemeEditor({
                           key={s.key}
                           onClick={() => updateAdjust(slot.key, { color: s.value })}
                           title={`color: ${s.key}`}
-                          className={`w-5 h-5 rounded-full border ${
-                            isActive ? "ring-2 ring-acid" : "border-[var(--line)]"
+                          className={`w-6 h-6 rounded-full border-2 transition ${
+                            isActive ? "border-acid scale-110" : "border-[var(--line)]"
                           }`}
                           style={{ background: s.value }}
                         />
@@ -464,7 +466,7 @@ export default function MemeEditor({
                         })
                       }
                       title="nudge left"
-                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                      className="px-3 py-1.5 text-xs hover:bg-ink-2 min-w-9"
                     >
                       ←
                     </button>
@@ -475,7 +477,7 @@ export default function MemeEditor({
                         })
                       }
                       title="nudge right"
-                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                      className="px-3 py-1.5 text-xs hover:bg-ink-2 min-w-9 border-l border-[var(--line)]"
                     >
                       →
                     </button>
@@ -509,22 +511,24 @@ export default function MemeEditor({
           )}
         </div>
 
-        {/* Action row */}
-        <div className="flex items-center gap-3 pt-2 border-t border-[var(--line)]">
-          <button
-            onClick={onBack}
-            className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/60 hover:text-acid"
-          >
-            ← back to picks
-          </button>
-          <div className="flex-1" />
-          <button
-            onClick={ship}
-            disabled={shipping}
-            className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-sm disabled:opacity-60"
-          >
-            {shipping ? "shipping…" : "ship it →"}
-          </button>
+        {/* Action row — sticky at bottom on mobile so ship-it stays in reach */}
+        <div className="sticky bottom-3 lg:static z-40">
+          <div className="flex items-center gap-3 p-3 lg:p-0 lg:pt-2 rounded-lg lg:rounded-none border border-acid/30 lg:border-0 lg:border-t lg:border-[var(--line)] bg-ink/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none shadow-[0_8px_40px_rgba(0,0,0,0.6)] lg:shadow-none">
+            <button
+              onClick={onBack}
+              className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/60 hover:text-acid"
+            >
+              ← back
+            </button>
+            <div className="flex-1" />
+            <button
+              onClick={ship}
+              disabled={shipping}
+              className="bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-sm disabled:opacity-60"
+            >
+              {shipping ? "shipping…" : "ship it →"}
+            </button>
+          </div>
         </div>
         {shipError && (
           <p className="text-hot text-sm font-[family-name:var(--font-mono)]">{shipError}</p>
