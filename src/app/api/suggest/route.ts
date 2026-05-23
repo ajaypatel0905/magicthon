@@ -6,19 +6,9 @@ import { TEMPLATES, TEMPLATE_BY_ID } from "@/lib/templates";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const PositionSchema = z.object({
-  dx: z.number().optional(),
-  dy: z.number().optional(),
-  scale: z.number().optional(),
-  color: z.string().optional(),
-  textCase: z.enum(["upper", "lower", "title", "none"]).optional(),
-  rotation: z.number().optional(),
-});
-
 const SuggestionSchema = z.object({
   template_id: z.string(),
   captions: z.record(z.string(), z.string()),
-  positions: z.record(z.string(), PositionSchema).optional(),
   why: z.string(),
 });
 
@@ -70,31 +60,13 @@ Rhythm: short hitters (5–8 words) for Impact templates. Twitter-screenshot ene
 Available templates (use template_id verbatim):
 ${templateLines}
 
-For each suggestion you may ALSO emit optional "positions" — one entry per slot key — to tell the renderer how to lay the caption out so it doesn't cover the photo's subject. Each position is OPTIONAL; only include keys/fields you actually want to tweak. Schema:
-  positions: { "<slot_key>": {
-    dx?: number,       // horizontal offset in % of meme width (-50..50, 0 = centered)
-    dy?: number,       // vertical offset in % of meme height (-80..80, 0 = template default)
-    scale?: number,    // font size multiplier (0.6..1.8; default 1)
-    color?: "#RRGGBB", // optional override (white default)
-    textCase?: "upper" | "lower" | "title" | "none",
-    rotation?: number  // degrees, integer (-15..15 usually; bigger only when intentional)
-  } }
-
-Position guidelines:
-- Look at where the SUBJECT of the photo is. Put the caption in the empty space (top if subject is in lower half, bottom if subject is upper, off to one side if subject is centered).
-- For top-bottom-impact: if the subject's face/eyes are in the top third, push the top caption up off-frame is bad — instead reduce its scale or move the bottom caption further down with positive dy.
-- For magazine-cover headline: a slight downward dy of 5-10 leaves room for masthead breathing.
-- Don't emit positions just for the sake of it. If centered defaults work, OMIT the positions key.
-- Rotation: only if the meme genuinely benefits (e.g. a tilted "STAMP" effect for satire). Default to 0.
-
 Output strict JSON matching exactly this schema, no prose:
 {
   "observations": [string, ...],     // 3-5 specific things you actually see in the photo (subject, expression, setting, props, vibe)
   "suggestions": [                    // 6 entries, each a different template_id
     {
       "template_id": "<one of the ids above>",
-      "captions": { "<slot_key>": "<text>", ... },
-      "positions": { ... }?,
+      "captions": { "<slot_key>": "<text>", ... },  // keys must match the template's slot keys exactly
       "why": "<one sentence: what in the photo makes this caption land>"
     }
   ]
@@ -129,23 +101,7 @@ function clampSuggestion(s: z.infer<typeof SuggestionSchema>) {
       captions[slot.key] = "";
     }
   }
-  // Clamp position values into safe ranges (the renderer also clamps).
-  const positions: Record<string, z.infer<typeof PositionSchema>> = {};
-  if (s.positions) {
-    for (const slot of tpl.slots) {
-      const p = s.positions[slot.key];
-      if (!p) continue;
-      const clamped: z.infer<typeof PositionSchema> = {};
-      if (typeof p.dx === "number") clamped.dx = Math.max(-50, Math.min(50, p.dx));
-      if (typeof p.dy === "number") clamped.dy = Math.max(-80, Math.min(80, p.dy));
-      if (typeof p.scale === "number") clamped.scale = Math.max(0.5, Math.min(2.5, p.scale));
-      if (typeof p.rotation === "number") clamped.rotation = Math.max(-180, Math.min(180, Math.round(p.rotation)));
-      if (p.color && /^#[0-9a-fA-F]{6}$/.test(p.color)) clamped.color = p.color;
-      if (p.textCase) clamped.textCase = p.textCase;
-      if (Object.keys(clamped).length) positions[slot.key] = clamped;
-    }
-  }
-  return { template_id: s.template_id, captions, positions, why: s.why };
+  return { template_id: s.template_id, captions, why: s.why };
 }
 
 export async function POST(req: Request) {
@@ -181,7 +137,7 @@ export async function POST(req: Request) {
     // De-dup template_ids, drop suggestions that came back with all-empty
     // captions (model truncation guard).
     const seen = new Set<string>();
-    const cleaned: Array<{ template_id: string; captions: Record<string, string>; positions?: Record<string, z.infer<typeof PositionSchema>>; why: string }> = [];
+    const cleaned: Array<{ template_id: string; captions: Record<string, string>; why: string }> = [];
     for (const s of validated.suggestions) {
       if (seen.has(s.template_id)) continue;
       const c = clampSuggestion(s);

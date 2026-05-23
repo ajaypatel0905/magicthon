@@ -17,7 +17,6 @@ const COLOR_SWATCHES = [
 type Suggestion = {
   template_id: string;
   captions: Record<string, string>;
-  positions?: Record<string, SlotAdjust>;
   why: string;
   image_prompt?: string;
 };
@@ -51,7 +50,7 @@ export default function MemeEditor({
   const [captions, setCaptions] = useState<Record<string, string>>({
     ...initial.captions,
   });
-  const [positions, setPositions] = useState<Record<string, SlotAdjust>>(initial.positions ?? {});
+  const [positions, setPositions] = useState<Record<string, SlotAdjust>>({});
   const [shipping, setShipping] = useState(false);
   const [shipError, setShipError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"png" | "copy" | null>(null);
