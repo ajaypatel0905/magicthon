@@ -63,6 +63,67 @@ export default function MemeEditor({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [slotBox, setSlotBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
+  // Undo / redo history of editor snapshots. We push before mutating so
+  // "undo" returns to the previous state.
+  type Snapshot = {
+    templateId: string;
+    captions: Record<string, string>;
+    positions: Record<string, SlotAdjust>;
+    photo: string;
+  };
+  const [past, setPast] = useState<Snapshot[]>([]);
+  const [future, setFuture] = useState<Snapshot[]>([]);
+
+  function snap(): Snapshot {
+    return { templateId, captions, positions, photo };
+  }
+  function commit() {
+    setPast((p) => [...p, snap()].slice(-30));
+    setFuture([]);
+  }
+  function apply(s: Snapshot) {
+    setTemplateId(s.templateId);
+    setCaptions(s.captions);
+    setPositions(s.positions);
+    setPhoto(s.photo);
+  }
+  function undo() {
+    setPast((p) => {
+      if (p.length === 0) return p;
+      const prev = p[p.length - 1];
+      setFuture((f) => [...f, snap()]);
+      apply(prev);
+      return p.slice(0, -1);
+    });
+  }
+  function redo() {
+    setFuture((f) => {
+      if (f.length === 0) return f;
+      const next = f[f.length - 1];
+      setPast((p) => [...p, snap()].slice(-30));
+      apply(next);
+      return f.slice(0, -1);
+    });
+  }
+
+  // Keyboard shortcuts for undo / redo.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.key === "z" && e.shiftKey) || e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateId, captions, positions, photo, past, future]);
+
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
   const renderRef = useRef<HTMLDivElement>(null);
@@ -132,6 +193,7 @@ export default function MemeEditor({
 
   // Reset positions when template changes (positions are per-template).
   function switchTemplate(nextId: string) {
+    commit();
     setPositions({});
     setTemplateId(nextId);
     // Carry compatible slot values where keys match, otherwise pull from a suggestion if we have one for this template.
@@ -154,6 +216,7 @@ export default function MemeEditor({
   }
 
   async function reroll() {
+    commit();
     setRerolling(true);
     try {
       const res = await fetch("/api/reroll", {
@@ -183,6 +246,7 @@ export default function MemeEditor({
   async function aiEditImage(instruction: string) {
     const text = instruction.trim();
     if (!text || !renderRef.current) return;
+    commit();
     setAiEditing(true);
     try {
       const { toPng } = await import("html-to-image");
@@ -214,6 +278,7 @@ export default function MemeEditor({
 
   async function regenerateBackground() {
     if (!imagePrompt) return;
+    commit();
     setRegenBg(true);
     try {
       const res = await fetch("/api/regen-image", {
@@ -253,6 +318,9 @@ export default function MemeEditor({
         setShipping(false);
         return;
       }
+      // Flag for the share page so it shows the "back to edit" button
+      // for THIS session only — not for someone opening the shared link.
+      try { sessionStorage.setItem("mt:just-shipped", json.code); } catch {}
       router.push(json.url);
     } catch (e) {
       setShipError(e instanceof Error ? e.message : "network error");
@@ -351,6 +419,7 @@ export default function MemeEditor({
         [key!]: { ...(p[key!] ?? {}), dx: pendingNx, dy: pendingNy },
       }));
     }
+    const preDragSnap = snap();
     function move(ev: PointerEvent) {
       if (ev.pointerId !== pointerId) return;
       const dxPx = ev.clientX - startX;
@@ -359,6 +428,9 @@ export default function MemeEditor({
       if (!didDrag) {
         didDrag = true;
         setDraggingSlot(key!);
+        // Push the pre-drag state to history so undo returns to it.
+        setPast((p) => [...p, preDragSnap].slice(-30));
+        setFuture([]);
       }
       if (ev.cancelable) ev.preventDefault();
       const dxPct = (dxPx / rect!.width) * 100;
@@ -392,10 +464,12 @@ export default function MemeEditor({
   }
 
   function updateAdjust(key: string, patch: Partial<SlotAdjust>) {
+    commit();
     setPositions((p) => ({ ...p, [key]: { ...(p[key] ?? {}), ...patch } }));
   }
 
   function resetAdjust(key: string) {
+    commit();
     setPositions((p) => {
       const next = { ...p };
       delete next[key];
@@ -427,10 +501,15 @@ export default function MemeEditor({
               key={selectedSlot}
               slotKey={selectedSlot}
               box={slotBox}
+              rootRef={renderRef}
               currentScale={positions[selectedSlot]?.scale ?? 1}
+              currentRotation={positions[selectedSlot]?.rotation ?? 0}
               onResize={(nextScale) => {
                 updateAdjust(selectedSlot, { scale: nextScale });
-                // Re-measure after the next paint so the box follows.
+                requestAnimationFrame(() => selectSlot(selectedSlot));
+              }}
+              onRotate={(nextRotation) => {
+                updateAdjust(selectedSlot, { rotation: nextRotation });
                 requestAnimationFrame(() => selectSlot(selectedSlot));
               }}
               onClose={() => {
@@ -766,13 +845,31 @@ export default function MemeEditor({
 
         {/* Action row — sticky at bottom on mobile so ship-it stays in reach */}
         <div className="sticky bottom-3 lg:static z-40">
-          <div className="flex items-center gap-3 p-3 lg:p-0 lg:pt-2 rounded-lg lg:rounded-none border border-acid/30 lg:border-0 lg:border-t lg:border-[var(--line)] bg-ink/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none shadow-[0_8px_40px_rgba(0,0,0,0.6)] lg:shadow-none">
+          <div className="flex items-center gap-2 p-3 lg:p-0 lg:pt-2 rounded-lg lg:rounded-none border border-acid/30 lg:border-0 lg:border-t lg:border-[var(--line)] bg-ink/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none shadow-[0_8px_40px_rgba(0,0,0,0.6)] lg:shadow-none">
             <button
               onClick={onBack}
               className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/60 hover:text-acid"
             >
               ← back
             </button>
+            <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
+              <button
+                onClick={undo}
+                disabled={past.length === 0}
+                title="undo (⌘Z)"
+                className="px-2.5 py-1.5 text-sm hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ↶
+              </button>
+              <button
+                onClick={redo}
+                disabled={future.length === 0}
+                title="redo (⇧⌘Z)"
+                className="px-2.5 py-1.5 text-sm hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed border-l border-[var(--line)]"
+              >
+                ↷
+              </button>
+            </div>
             <div className="flex-1" />
             <button
               onClick={ship}
@@ -791,18 +888,24 @@ export default function MemeEditor({
   );
 }
 
-/** Canva-style dashed selection box with 4 corner resize handles. */
+/** Canva-style dashed selection box with 4 corner resize handles + rotate. */
 function SelectionOverlay({
   slotKey,
   box,
+  rootRef,
   currentScale,
+  currentRotation,
   onResize,
+  onRotate,
   onClose,
 }: {
   slotKey: string;
   box: { left: number; top: number; width: number; height: number };
+  rootRef: React.RefObject<HTMLDivElement | null>;
   currentScale: number;
+  currentRotation: number;
   onResize: (next: number) => void;
+  onRotate: (next: number) => void;
   onClose: () => void;
 }) {
   const PAD = 6;
@@ -830,7 +933,6 @@ function SelectionOverlay({
       function move(ev: PointerEvent) {
         const dx = ev.clientX - startX;
         const dy = ev.clientY - startY;
-        // "outward" relative to the corner = enlarge, "inward" = shrink
         const delta = (dx * cx + dy * cy) / 2;
         const factor = 1 + delta / (baseDiag * 0.5);
         const next = Math.max(0.5, Math.min(2.5, startScale * factor));
@@ -846,6 +948,39 @@ function SelectionOverlay({
       target.addEventListener("pointerup", up);
       target.addEventListener("pointercancel", up);
     };
+  }
+
+  function onRotateDown(e: React.PointerEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget as HTMLDivElement;
+    // Compute slot center in page coords so we can read pointer angles.
+    const root = rootRef.current?.getBoundingClientRect();
+    const cxPage = (root?.left ?? 0) + box.left + box.width / 2;
+    const cyPage = (root?.top ?? 0) + box.top + box.height / 2;
+    const startAngle = Math.atan2(e.clientY - cyPage, e.clientX - cxPage);
+    const startRotation = currentRotation || 0;
+    try { target.setPointerCapture(e.pointerId); } catch {}
+    function move(ev: PointerEvent) {
+      const a = Math.atan2(ev.clientY - cyPage, ev.clientX - cxPage);
+      const deltaDeg = ((a - startAngle) * 180) / Math.PI;
+      // Snap to whole degrees, clamp to a sane band.
+      let next = startRotation + deltaDeg;
+      // Soft snap to 0°/90°/-90°/180° within 4° to make alignment easy.
+      [0, 90, -90, 180, -180].forEach((s) => {
+        if (Math.abs(next - s) < 4) next = s;
+      });
+      onRotate(Math.round(next));
+    }
+    function up(ev: PointerEvent) {
+      try { target.releasePointerCapture(ev.pointerId); } catch {}
+      target.removeEventListener("pointermove", move);
+      target.removeEventListener("pointerup", up);
+      target.removeEventListener("pointercancel", up);
+    }
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
   }
 
   return (
@@ -879,6 +1014,34 @@ function SelectionOverlay({
           ×
         </button>
       </div>
+      {/* Rotate handle — sits above the top edge, connected by a thin line */}
+      <div
+        data-selection-element
+        onPointerDown={onRotateDown}
+        className="absolute z-30 flex items-center justify-center cursor-grab select-none"
+        style={{
+          left: box.left + box.width / 2,
+          top: box.top - 34,
+          width: 32,
+          height: 32,
+          transform: "translate(-50%, -50%)",
+          touchAction: "none",
+        }}
+        title="drag to rotate"
+      >
+        <span className="block w-3.5 h-3.5 bg-acid border-2 border-ink rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+      </div>
+      <div
+        className="absolute z-20 bg-acid/70 pointer-events-none"
+        style={{
+          left: box.left + box.width / 2 - 0.5,
+          top: box.top - 18,
+          width: 1,
+          height: 18,
+        }}
+        aria-hidden
+      />
+
       {/* 4 corner resize handles — sit entirely outside the slot */}
       {corners.map((c) => (
         <div

@@ -22,6 +22,7 @@ const Body = z.object({
         scale: z.number().optional(),
         color: z.string().optional(),
         textCase: z.enum(["upper", "lower", "title", "none"]).optional(),
+        rotation: z.number().optional(),
       }),
     )
     .optional(),

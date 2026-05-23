@@ -14,6 +14,8 @@ export type SlotAdjust = {
   color?: string;
   /** Case: "upper" / "lower" / "title" / "none" (use template default). */
   textCase?: "upper" | "lower" | "title" | "none";
+  /** Rotation in degrees. */
+  rotation?: number;
 };
 
 type Props = {
@@ -29,11 +31,13 @@ function slotStyle(positions: Props["positions"], key: string): React.CSSPropert
   if (!p) return {};
   const tx = p.dx ?? 0;
   const ty = p.dy ?? 0;
-  if (!tx && !ty) return {};
-  // cqw is % of the meme container's width. Since meme frames are square,
-  // 1cqw == 1cqh visually — using cqw for both axes gives meaningful, image-
-  // relative movement instead of the tiny element-relative % defaults.
-  return { transform: `translate(${tx}cqw, ${ty}cqw)` };
+  const rot = p.rotation ?? 0;
+  if (!tx && !ty && !rot) return {};
+  // cqw is % of the meme container's width (square frames).
+  const parts: string[] = [];
+  if (tx || ty) parts.push(`translate(${tx}cqw, ${ty}cqw)`);
+  if (rot) parts.push(`rotate(${rot}deg)`);
+  return { transform: parts.join(" ") };
 }
 
 function slotTextStyle(positions: Props["positions"], key: string): React.CSSProperties {
