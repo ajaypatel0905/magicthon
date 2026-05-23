@@ -857,17 +857,19 @@ export default function MemeEditor({
                 onClick={undo}
                 disabled={past.length === 0}
                 title="undo (⌘Z)"
-                className="px-2.5 py-1.5 text-sm hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-xs font-[family-name:var(--font-mono)] uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                ↶
+                <span>↶</span>
+                <span className="hidden sm:inline">undo</span>
               </button>
               <button
                 onClick={redo}
                 disabled={future.length === 0}
                 title="redo (⇧⌘Z)"
-                className="px-2.5 py-1.5 text-sm hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed border-l border-[var(--line)]"
+                className="px-3 py-1.5 text-xs font-[family-name:var(--font-mono)] uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed border-l border-[var(--line)] flex items-center gap-1.5"
               >
-                ↷
+                <span className="hidden sm:inline">redo</span>
+                <span>↷</span>
               </button>
             </div>
             <div className="flex-1" />
