@@ -6,19 +6,16 @@ import { TEMPLATES, TEMPLATE_BY_ID } from "@/lib/templates";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const GRADIENTS = [
-  "linear-gradient(135deg, #1a1a16 0%, #2a2f3f 100%)",
-  "linear-gradient(135deg, #14140e 0%, #3a3f2a 100%)",
-  "linear-gradient(135deg, #1f0d0d 0%, #ff5436 220%)",
-  "linear-gradient(135deg, #0c0c0a 0%, #c6f24e 320%)",
-  "linear-gradient(135deg, #15150f 0%, #4a3a1a 100%)",
-  "linear-gradient(135deg, #0a0a14 0%, #6e3aff 220%)",
-  "linear-gradient(135deg, #1a1010 0%, #2a4a3a 100%)",
-];
+function pollinationsUrl(prompt: string, seed: number): string {
+  // Free image-gen endpoint backed by Flux. Caches by URL.
+  const encoded = encodeURIComponent(prompt);
+  return `https://image.pollinations.ai/prompt/${encoded}?width=768&height=768&model=flux&nologo=true&enhance=true&seed=${seed}`;
+}
 
 const SuggestionSchema = z.object({
   template_id: z.string(),
   captions: z.record(z.string(), z.string()),
+  image_prompt: z.string().min(4),
   why: z.string().optional(),
 });
 
@@ -56,12 +53,15 @@ What's cringe — auto-fail:
 Available templates (use id verbatim):
 ${templateLines}
 
+For EACH suggestion, also write an image_prompt — a short visual description (10-18 words) of a *photographic* AI-generated background image that complements the caption WITHOUT containing any text or words. Style cues that work: cinematic lighting, dramatic shadows, shallow depth of field, moody color grading, photoreal. The image should leave the upper or lower third relatively empty so caption typography sits cleanly. Avoid logos, faces of real people, and anything readable.
+
 Output strict JSON, no prose:
 {
   "suggestions": [
     {
       "template_id": "<id from list>",
       "captions": { "<slot_key>": "<text>", ... },
+      "image_prompt": "<10-18 words, no text in image>",
       "why": "<one sentence>"
     }
   ]
@@ -92,7 +92,12 @@ function clampSuggestion(s: z.infer<typeof SuggestionSchema>) {
       captions[slot.key] = "";
     }
   }
-  return { template_id: s.template_id, captions, why: s.why ?? "" };
+  return {
+    template_id: s.template_id,
+    captions,
+    image_prompt: s.image_prompt.trim().slice(0, 220),
+    why: s.why ?? "",
+  };
 }
 
 export async function POST(req: Request) {
@@ -126,14 +131,18 @@ export async function POST(req: Request) {
       captions: Record<string, string>;
       why: string;
       background: string;
+      image_prompt: string;
     }> = [];
     for (const s of validated.suggestions) {
       if (seen.has(s.template_id)) continue;
       const c = clampSuggestion(s);
       if (!c) continue;
-      const g = GRADIENTS[cleaned.length % GRADIENTS.length];
+      // Deterministic seed per topic + index so the same topic stays consistent and Pollinations can cache.
+      const seed =
+        Math.abs([...topic + c.template_id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 0)) % 1_000_000;
+      const background = pollinationsUrl(c.image_prompt, seed);
       seen.add(c.template_id);
-      cleaned.push({ ...c, background: g });
+      cleaned.push({ ...c, background });
       if (cleaned.length >= 6) break;
     }
 
