@@ -111,19 +111,19 @@ export default function LiveWall({ initialMemes, initialCounts }: Props) {
                 ✦ new
               </div>
             )}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 flex items-center gap-1.5 bg-gradient-to-t from-black/85 via-black/30 to-transparent">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 flex items-center gap-1.5 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
               {top.length > 0 ? (
                 top.map(([emoji, n]) => (
                   <span
                     key={emoji}
-                    className="rounded-full bg-ink/85 border border-acid/30 px-2 py-0.5 text-[11px] flex items-center gap-1"
+                    className="rounded-full bg-ink/85 border border-acid/30 px-2 py-0.5 text-[12px] flex items-center gap-1"
                   >
                     <span>{emoji}</span>
                     <span className="font-[family-name:var(--font-mono)] text-acid">{n}</span>
                   </span>
                 ))
               ) : (
-                <span className="font-[family-name:var(--font-mono)] text-[9px] uppercase tracking-widest text-paper/60">
+                <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/55">
                   no reactions yet
                 </span>
               )}

@@ -5,19 +5,7 @@ import Link from "next/link";
 import MemePreview from "@/components/MemePreview";
 import MemeEditor from "@/components/MemeEditor";
 import LoadingTicker from "@/components/LoadingTicker";
-import RotatingText from "@/components/RotatingText";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
-
-const SEEN_LABELS = [
-  "kya dikha:",
-  "we clocked:",
-  "the scene:",
-  "what's going on:",
-  "intel:",
-  "what we noticed:",
-  "the gist:",
-  "claude's read:",
-] as const;
 
 type Suggestion = {
   template_id: string;
@@ -118,15 +106,12 @@ export default function CreatePage() {
         >
           ← back
         </Link>
-        <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-4 tracking-tight">
-          {loading ? "Cooking it up." : data ? "Pick one." : "Drop a photo."}
+        <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-2 tracking-tight">
+          {loading ? "Cooking it up." : data ? "Which one ships?" : "Drop a photo."}
         </h1>
         {data && (
-          <p className="text-paper/70 mb-6 text-sm sm:text-base">
-            <span className="text-paper/40 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest mr-2">
-              <RotatingText lines={SEEN_LABELS} intervalMs={4000} />
-            </span>
-            {data.observations.join(" · ")}
+          <p className="text-paper/55 font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest mb-6">
+            tap one to edit · drag text · ship the link
           </p>
         )}
 
