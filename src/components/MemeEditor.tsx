@@ -456,8 +456,8 @@ export default function MemeEditor({
             <input
               value={aiInstruction}
               onChange={(e) => setAiInstruction(e.target.value)}
-              placeholder="edit image with AI — 'make it cinematic', 'add dramatic lighting', 'sepia 70s film'"
-              className="flex-1 bg-ink-2 border border-[var(--line)] rounded-md px-3 py-2 text-sm text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
+              placeholder="edit with AI — 'make it cinematic', 'add dramatic lighting'…"
+              className="flex-1 bg-ink-2 border border-[var(--line)] rounded-md px-3 py-2 text-base text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
               disabled={aiEditing}
             />
             <button
