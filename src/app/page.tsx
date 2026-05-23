@@ -109,18 +109,17 @@ export default function Home() {
       <div className="relative z-10">
 
       {/* HERO */}
-      <header className="relative min-h-[100svh] flex items-center pt-24 pb-12 px-4">
-        <div className="relative max-w-6xl mx-auto w-full grid lg:grid-cols-[0.95fr_1.05fr] gap-10 lg:gap-14 items-center">
+      <header className="relative min-h-[100svh] flex items-center pt-20 pb-10 px-4">
+        <div className="relative max-w-6xl mx-auto w-full grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
           {/* Left: wordmark + caption + dropzone */}
           <div className="relative">
-            <div className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.28em] uppercase opacity-60 mb-4">
+            <div className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.28em] uppercase opacity-60 mb-3">
               <RotatingText lines={HERO_EYEBROWS} intervalMs={4200} />
             </div>
-            <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.84] tracking-tighter text-[clamp(56px,15vw,168px)]">
-              Make it
-              <br />a <span className="text-acid">meme</span>.
+            <h1 className="font-[family-name:var(--font-display)] font-extrabold leading-[0.88] tracking-tighter text-[clamp(48px,9vw,108px)]">
+              Make it a <span className="text-acid">meme</span>.
             </h1>
-            <p className="font-[family-name:var(--font-display)] font-medium leading-[1.05] tracking-tight text-[clamp(18px,4vw,28px)] mt-6 mb-7 text-paper/85 min-h-[3em]">
+            <p className="font-[family-name:var(--font-display)] font-medium leading-[1.1] tracking-tight text-[clamp(16px,2.6vw,22px)] mt-4 mb-5 text-paper/85 min-h-[3em]">
               <RotatingText lines={HERO_TAGLINES} intervalMs={5000} />
             </p>
 
