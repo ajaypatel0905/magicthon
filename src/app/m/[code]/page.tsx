@@ -23,7 +23,7 @@ export default async function MemePage({
 
   const memeQ = await sb
     .from("memes")
-    .select("id, code, photo_url, template_id, captions, observations, created_at")
+    .select("id, code, photo_url, template_id, captions, positions, observations, created_at")
     .eq("code", code.toLowerCase())
     .single();
 
@@ -60,6 +60,7 @@ export default async function MemePage({
           template={tpl}
           photoUrl={meme.photo_url}
           captions={meme.captions as Record<string, string>}
+          positions={(meme.positions ?? {}) as Record<string, { dy: number }>}
           initialCounts={initialCounts}
           code={meme.code}
         />

@@ -65,6 +65,12 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-1.5">
           <Link
+            href="/text"
+            className="hidden sm:inline-flex font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-sm"
+          >
+            text mode
+          </Link>
+          <Link
             href="/wall"
             className="font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-widest px-3 py-2 text-paper/70 hover:text-acid rounded-sm"
           >
@@ -102,8 +108,14 @@ export default function Home() {
             </p>
             <div className="hidden sm:block">
               <UploadDropzone />
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <TrySampleButton />
+                <Link
+                  href="/text"
+                  className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4 decoration-paper/30 hover:decoration-acid"
+                >
+                  no photo? try text mode →
+                </Link>
               </div>
             </div>
             <Link
@@ -112,8 +124,14 @@ export default function Home() {
             >
               drop a photo →
             </Link>
-            <div className="sm:hidden mt-3 text-center">
+            <div className="sm:hidden mt-3 text-center flex flex-col items-center gap-2">
               <TrySampleButton />
+              <Link
+                href="/text"
+                className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4"
+              >
+                no photo? try text mode →
+              </Link>
             </div>
           </div>
 

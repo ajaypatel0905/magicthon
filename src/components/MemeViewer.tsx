@@ -12,6 +12,7 @@ type Props = {
   template: Template;
   photoUrl: string;
   captions: Record<string, string>;
+  positions?: Record<string, { dy: number }>;
   initialCounts: Record<string, number>;
   code: string;
 };
@@ -21,6 +22,7 @@ export default function MemeViewer({
   template,
   photoUrl,
   captions,
+  positions,
   initialCounts,
   code,
 }: Props) {
@@ -100,7 +102,12 @@ export default function MemeViewer({
 
   return (
     <div className="mt-3">
-      <MemePreview template={template} photo={photoUrl} captions={captions} />
+      <MemePreview
+        template={template}
+        photo={photoUrl}
+        captions={captions}
+        positions={positions}
+      />
 
       <div className="mt-4 flex flex-wrap gap-2">
         {EMOJIS.map((e) => (

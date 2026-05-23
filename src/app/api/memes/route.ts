@@ -13,6 +13,7 @@ const Body = z.object({
   image: z.string().min(10), // data URL or http URL
   template_id: z.string().min(1),
   captions: z.record(z.string(), z.string()),
+  positions: z.record(z.string(), z.object({ dy: z.number() })).optional(),
   observations: z.array(z.string()).optional(),
 });
 
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.message }, { status: 400 });
   }
-  const { image, template_id, captions, observations } = parsed.data;
+  const { image, template_id, captions, positions, observations } = parsed.data;
 
   const code = makeCode();
   let photoUrl: string;
@@ -68,8 +69,11 @@ export async function POST(req: Request) {
     photoUrl = publicStorageUrl(path);
   } else if (image.startsWith("http")) {
     photoUrl = image;
+  } else if (image.startsWith("linear-gradient") || image.startsWith("radial-gradient")) {
+    // text-mode meme: store the CSS gradient string verbatim; MemePreview renders it.
+    photoUrl = image;
   } else {
-    return NextResponse.json({ error: "image must be data URL or http(s) URL" }, { status: 400 });
+    return NextResponse.json({ error: "image must be data URL, http URL, or CSS gradient" }, { status: 400 });
   }
 
   const ins = await sb
@@ -79,6 +83,7 @@ export async function POST(req: Request) {
       photo_url: photoUrl,
       template_id,
       captions,
+      positions: positions ?? {},
       observations: observations ?? null,
     })
     .select("code")

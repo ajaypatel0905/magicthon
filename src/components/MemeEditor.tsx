@@ -33,10 +33,12 @@ export default function MemeEditor({
   const [captions, setCaptions] = useState<Record<string, string>>({
     ...initial.captions,
   });
+  const [positions, setPositions] = useState<Record<string, { dy: number }>>({});
   const [shipping, setShipping] = useState(false);
   const [shipError, setShipError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"png" | "copy" | null>(null);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [draggingSlot, setDraggingSlot] = useState<string | null>(null);
 
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
@@ -48,7 +50,9 @@ export default function MemeEditor({
     return map;
   }, [allSuggestions]);
 
+  // Reset positions when template changes (positions are per-template).
   function switchTemplate(nextId: string) {
+    setPositions({});
     setTemplateId(nextId);
     // Carry compatible slot values where keys match, otherwise pull from a suggestion if we have one for this template.
     const nextTpl = TEMPLATE_BY_ID[nextId];
@@ -80,6 +84,7 @@ export default function MemeEditor({
           image: photo,
           template_id: templateId,
           captions,
+          positions,
           observations,
         }),
       });
@@ -152,13 +157,59 @@ export default function MemeEditor({
     }
   }
 
+  const draggable = templateId === "top-bottom-impact" || templateId === "bottom-only";
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (!draggable) return;
+    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-slot]");
+    if (!target) return;
+    const key = target.dataset.slot;
+    if (!key) return;
+    const rect = renderRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const startY = e.clientY;
+    const startDy = positions[key]?.dy ?? 0;
+    setDraggingSlot(key);
+    target.setPointerCapture(e.pointerId);
+
+    function move(ev: PointerEvent) {
+      const dyPct = ((ev.clientY - startY) / rect!.height) * 100;
+      const next = Math.max(-50, Math.min(50, startDy + dyPct));
+      setPositions((p) => ({ ...p, [key!]: { dy: next } }));
+    }
+    function up(ev: PointerEvent) {
+      try { target!.releasePointerCapture(ev.pointerId); } catch {}
+      target!.removeEventListener("pointermove", move);
+      target!.removeEventListener("pointerup", up);
+      target!.removeEventListener("pointercancel", up);
+      setDraggingSlot(null);
+    }
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
+  }
+
   return (
     <div className="grid lg:grid-cols-[1.1fr_1fr] gap-6">
       {/* Preview */}
       <div>
-        <div ref={renderRef} className="max-w-md mx-auto">
-          <MemePreview template={tpl} photo={photo} captions={captions} />
+        <div
+          ref={renderRef}
+          onPointerDown={onPointerDown}
+          className={`max-w-md mx-auto ${draggable ? "cursor-grab" : ""} ${draggingSlot ? "cursor-grabbing" : ""}`}
+        >
+          <MemePreview
+            template={tpl}
+            photo={photo}
+            captions={captions}
+            positions={positions}
+          />
         </div>
+        {draggable && (
+          <p className="mt-3 text-center font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45">
+            ↕ drag the caption to position
+          </p>
+        )}
       </div>
 
       {/* Controls */}

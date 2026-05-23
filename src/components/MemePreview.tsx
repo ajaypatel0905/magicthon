@@ -208,6 +208,16 @@ function PhotoLayer({
   src: string;
   className?: string;
 }) {
+  // Support text-mode: `src` may be a CSS gradient instead of an image URL.
+  if (src.startsWith("linear-gradient") || src.startsWith("radial-gradient")) {
+    return (
+      <div
+        className={`absolute inset-0 w-full h-full ${className}`}
+        style={{ background: src }}
+        aria-hidden
+      />
+    );
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
