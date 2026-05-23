@@ -91,9 +91,13 @@ export default function MemeEditor({
     setSelectedSlot(key);
     const root = renderRef.current;
     if (!root) return;
-    const el = root.querySelector<HTMLElement>(`[data-slot="${key}"]`);
-    if (!el) return;
-    const r = el.getBoundingClientRect();
+    const wrapper = root.querySelector<HTMLElement>(`[data-slot="${key}"]`);
+    if (!wrapper) return;
+    // Impact templates wrap the text in a <span> — measure that so the
+    // selection box hugs the actual caption, not the full-width wrapper.
+    // Other templates have the text directly on the data-slot element.
+    const textEl = wrapper.querySelector<HTMLElement>("span") ?? wrapper;
+    const r = textEl.getBoundingClientRect();
     const root_r = root.getBoundingClientRect();
     setSlotBox({
       left: r.left - root_r.left,
