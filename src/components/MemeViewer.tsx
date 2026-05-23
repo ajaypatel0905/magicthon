@@ -29,7 +29,32 @@ export default function MemeViewer({
 }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(initialCounts);
   const [busy, setBusy] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const lastReactRef = useRef<{ emoji: string; t: number } | null>(null);
+  const memeRef = useRef<HTMLDivElement>(null);
+
+  async function download() {
+    if (!memeRef.current) return;
+    setDownloading(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(memeRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        skipFonts: false,
+      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `magicthon-${code}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      /* ignore */
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -91,12 +116,14 @@ export default function MemeViewer({
 
   return (
     <div className="mt-3">
-      <MemePreview
-        template={template}
-        photo={photoUrl}
-        captions={captions}
-        positions={positions}
-      />
+      <div ref={memeRef}>
+        <MemePreview
+          template={template}
+          photo={photoUrl}
+          captions={captions}
+          positions={positions}
+        />
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {EMOJIS.map((e) => (
@@ -114,6 +141,15 @@ export default function MemeViewer({
         ))}
 
         <div className="flex-1" />
+
+        <button
+          onClick={download}
+          disabled={downloading}
+          className="rounded-full border border-[var(--line)] bg-ink-2 hover:border-acid/60 active:scale-95 transition px-4 py-1.5 text-sm font-[family-name:var(--font-mono)] uppercase tracking-widest disabled:opacity-60"
+          title="download as PNG"
+        >
+          {downloading ? "rendering…" : "↓ png"}
+        </button>
 
         <ShareMenu
           url={typeof window !== "undefined" ? `${window.location.origin}/m/${code}` : `/m/${code}`}
