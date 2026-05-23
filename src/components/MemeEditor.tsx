@@ -308,14 +308,17 @@ export default function MemeEditor({
     if (!key) return;
     const rect = renderRef.current?.getBoundingClientRect();
     if (!rect) return;
-    // Important on iOS: prevent the touch from being interpreted as page scroll.
-    e.preventDefault();
+    const pointerId = e.pointerId;
     const startX = e.clientX;
     const startY = e.clientY;
     const existing = positions[key] ?? {};
     const startDx = existing.dx ?? 0;
     const startDy = existing.dy ?? 0;
     let didDrag = false;
+
+    // Capture pointer on the slot so subsequent moves stay with us even when
+    // the finger leaves the element bounds.
+    try { target.setPointerCapture(pointerId); } catch {}
 
     let rafPending = false;
     let pendingNx = startDx;
@@ -328,43 +331,43 @@ export default function MemeEditor({
       }));
     }
     function move(ev: PointerEvent) {
+      if (ev.pointerId !== pointerId) return;
       const dxPx = ev.clientX - startX;
       const dyPx = ev.clientY - startY;
-      // 8px slop — finger wobble doesn't accidentally trigger drag.
       if (!didDrag && Math.hypot(dxPx, dyPx) < 8) return;
-      if (!draggable) return;
       if (!didDrag) {
         didDrag = true;
         setDraggingSlot(key!);
       }
-      // Prevent default during the drag so iOS doesn't fight us with scroll.
       if (ev.cancelable) ev.preventDefault();
       const dxPct = (dxPx / rect!.width) * 100;
       const dyPct = (dyPx / rect!.height) * 100;
-      pendingNx = Math.max(-35, Math.min(35, startDx + dxPct));
-      pendingNy = Math.max(-40, Math.min(40, startDy + dyPct));
+      // Wide clamps — text can roam most of the meme; the Frame's overflow:hidden
+      // safely clips anything that strays.
+      pendingNx = Math.max(-50, Math.min(50, startDx + dxPct));
+      pendingNy = Math.max(-80, Math.min(80, startDy + dyPct));
       if (!rafPending) {
         rafPending = true;
         requestAnimationFrame(flush);
       }
     }
-    function up() {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-      if (!didDrag) {
+    function up(ev: PointerEvent) {
+      if (ev.pointerId !== pointerId) return;
+      try { target!.releasePointerCapture(pointerId); } catch {}
+      target!.removeEventListener("pointermove", move);
+      target!.removeEventListener("pointerup", up);
+      target!.removeEventListener("pointercancel", up);
+      if (didDrag) {
         selectSlot(key!);
-        focusSlotInput(key!);
       } else {
         selectSlot(key!);
+        focusSlotInput(key!);
       }
       setDraggingSlot(null);
     }
-    // Window-level listeners so the drag keeps tracking even when the finger
-    // moves outside the slot's bounding rect (which iOS can otherwise drop).
-    window.addEventListener("pointermove", move, { passive: false });
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
   }
 
   function updateAdjust(key: string, patch: Partial<SlotAdjust>) {
@@ -682,7 +685,7 @@ export default function MemeEditor({
                     <button
                       onClick={() =>
                         updateAdjust(slot.key, {
-                          dx: Math.max(-45, (adj.dx ?? 0) - 5),
+                          dx: Math.max(-50, (adj.dx ?? 0) - 5),
                         })
                       }
                       title="nudge left"
@@ -693,7 +696,7 @@ export default function MemeEditor({
                     <button
                       onClick={() =>
                         updateAdjust(slot.key, {
-                          dx: Math.min(45, (adj.dx ?? 0) + 5),
+                          dx: Math.min(50, (adj.dx ?? 0) + 5),
                         })
                       }
                       title="nudge right"

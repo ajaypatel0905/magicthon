@@ -30,7 +30,10 @@ function slotStyle(positions: Props["positions"], key: string): React.CSSPropert
   const tx = p.dx ?? 0;
   const ty = p.dy ?? 0;
   if (!tx && !ty) return {};
-  return { transform: `translate(${tx}%, ${ty}%)` };
+  // cqw is % of the meme container's width. Since meme frames are square,
+  // 1cqw == 1cqh visually — using cqw for both axes gives meaningful, image-
+  // relative movement instead of the tiny element-relative % defaults.
+  return { transform: `translate(${tx}cqw, ${ty}cqw)` };
 }
 
 function slotTextStyle(positions: Props["positions"], key: string): React.CSSProperties {
