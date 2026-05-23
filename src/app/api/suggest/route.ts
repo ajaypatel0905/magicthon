@@ -160,7 +160,7 @@ export async function POST(req: Request) {
   try {
     const raw = await callOpenRouter({
       model: MODELS.sonnet,
-      max_tokens: 1500,
+      max_tokens: 2800,
       temperature: 0.9,
       response_format: { type: "json_object" },
       messages: [
@@ -178,13 +178,16 @@ export async function POST(req: Request) {
     const parsed = JSON.parse(extractJSON(raw));
     const validated = ResponseSchema.parse(parsed);
 
-    // De-dup template_ids, prefer first occurrence, then top up with unused templates if short.
+    // De-dup template_ids, drop suggestions that came back with all-empty
+    // captions (model truncation guard).
     const seen = new Set<string>();
-    const cleaned: Array<{ template_id: string; captions: Record<string, string>; why: string }> = [];
+    const cleaned: Array<{ template_id: string; captions: Record<string, string>; positions?: Record<string, z.infer<typeof PositionSchema>>; why: string }> = [];
     for (const s of validated.suggestions) {
       if (seen.has(s.template_id)) continue;
       const c = clampSuggestion(s);
       if (!c) continue;
+      const hasText = Object.values(c.captions).some((v) => v && v.trim().length > 0);
+      if (!hasText) continue;
       seen.add(c.template_id);
       cleaned.push(c);
       if (cleaned.length >= 6) break;
