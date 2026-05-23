@@ -65,7 +65,7 @@ create policy "anyone reacts"
   on public.reactions for insert
   with check (true);
 
--- 4. Realtime for reactions.
+-- 4. Realtime for reactions + memes (for the live wall).
 do $$
 begin
   if not exists (
@@ -73,5 +73,11 @@ begin
     where pubname = 'supabase_realtime' and tablename = 'reactions'
   ) then
     alter publication supabase_realtime add table public.reactions;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'memes'
+  ) then
+    alter publication supabase_realtime add table public.memes;
   end if;
 end $$;
