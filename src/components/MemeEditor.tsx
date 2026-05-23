@@ -308,6 +308,8 @@ export default function MemeEditor({
     if (!key) return;
     const rect = renderRef.current?.getBoundingClientRect();
     if (!rect) return;
+    // Important on iOS: prevent the touch from being interpreted as page scroll.
+    e.preventDefault();
     const startX = e.clientX;
     const startY = e.clientY;
     const existing = positions[key] ?? {};
@@ -334,11 +336,11 @@ export default function MemeEditor({
       if (!didDrag) {
         didDrag = true;
         setDraggingSlot(key!);
-        try { target!.setPointerCapture(ev.pointerId); } catch {}
       }
+      // Prevent default during the drag so iOS doesn't fight us with scroll.
+      if (ev.cancelable) ev.preventDefault();
       const dxPct = (dxPx / rect!.width) * 100;
       const dyPct = (dyPx / rect!.height) * 100;
-      // Clamp tight — text stays inside the visible image area.
       pendingNx = Math.max(-35, Math.min(35, startDx + dxPct));
       pendingNy = Math.max(-40, Math.min(40, startDy + dyPct));
       if (!rafPending) {
@@ -346,24 +348,23 @@ export default function MemeEditor({
         requestAnimationFrame(flush);
       }
     }
-    function up(ev: PointerEvent) {
-      try { target!.releasePointerCapture(ev.pointerId); } catch {}
-      target!.removeEventListener("pointermove", move);
-      target!.removeEventListener("pointerup", up);
-      target!.removeEventListener("pointercancel", up);
-      // No drag = tap. Select the slot (visual handle) AND focus input.
+    function up() {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
       if (!didDrag) {
         selectSlot(key!);
         focusSlotInput(key!);
       } else {
-        // After drag, refresh selection box to new position.
         selectSlot(key!);
       }
       setDraggingSlot(null);
     }
-    target.addEventListener("pointermove", move);
-    target.addEventListener("pointerup", up);
-    target.addEventListener("pointercancel", up);
+    // Window-level listeners so the drag keeps tracking even when the finger
+    // moves outside the slot's bounding rect (which iOS can otherwise drop).
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   }
 
   function updateAdjust(key: string, patch: Partial<SlotAdjust>) {
@@ -781,10 +782,14 @@ function SelectionOverlay({
   onClose: () => void;
 }) {
   const PAD = 6;
+  const HANDLE = 26;
+  // Handles sit entirely OUTSIDE the slot bounds (no overlap with text), so
+  // tapping the text always reaches the slot's drag/select handler — not the
+  // resize handle.
   const corners = [
-    { key: "tl", cx: -1, cy: -1, left: box.left - PAD, top: box.top - PAD, cursor: "cursor-nwse-resize" },
-    { key: "tr", cx: 1, cy: -1, left: box.left + box.width + PAD, top: box.top - PAD, cursor: "cursor-nesw-resize" },
-    { key: "bl", cx: -1, cy: 1, left: box.left - PAD, top: box.top + box.height + PAD, cursor: "cursor-nesw-resize" },
+    { key: "tl", cx: -1, cy: -1, left: box.left - PAD - HANDLE, top: box.top - PAD - HANDLE, cursor: "cursor-nwse-resize" },
+    { key: "tr", cx: 1, cy: -1, left: box.left + box.width + PAD, top: box.top - PAD - HANDLE, cursor: "cursor-nesw-resize" },
+    { key: "bl", cx: -1, cy: 1, left: box.left - PAD - HANDLE, top: box.top + box.height + PAD, cursor: "cursor-nesw-resize" },
     { key: "br", cx: 1, cy: 1, left: box.left + box.width + PAD, top: box.top + box.height + PAD, cursor: "cursor-nwse-resize" },
   ] as const;
 
@@ -849,22 +854,22 @@ function SelectionOverlay({
           ×
         </button>
       </div>
-      {/* 4 corner resize handles */}
+      {/* 4 corner resize handles — sit entirely outside the slot */}
       {corners.map((c) => (
         <div
           key={c.key}
           onPointerDown={makeHandleDown(c.cx, c.cy)}
-          className={`absolute z-30 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none ${c.cursor}`}
+          className={`absolute z-30 flex items-center justify-center select-none ${c.cursor}`}
           style={{
             left: c.left,
             top: c.top,
-            width: 32,
-            height: 32,
+            width: HANDLE,
+            height: HANDLE,
             touchAction: "none",
           }}
           title="drag to resize"
         >
-          <span className="block w-4 h-4 bg-acid border-2 border-ink rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+          <span className="block w-3.5 h-3.5 bg-acid border-2 border-ink rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
         </div>
       ))}
     </>
