@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import MemePreview from "@/components/MemePreview";
+import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
 import { supabaseBrowser } from "@/lib/supabase";
 import type { Template } from "@/lib/templates";
 
@@ -12,7 +12,7 @@ type Props = {
   template: Template;
   photoUrl: string;
   captions: Record<string, string>;
-  positions?: Record<string, { dy: number }>;
+  positions?: Record<string, SlotAdjust>;
   initialCounts: Record<string, number>;
   code: string;
 };

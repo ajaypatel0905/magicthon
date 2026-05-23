@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LiveWall from "@/components/LiveWall";
+import type { SlotAdjust } from "@/components/MemePreview";
 import { supabaseService } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ type Meme = {
   photo_url: string;
   template_id: string;
   captions: Record<string, string>;
-  positions?: Record<string, { dy: number }>;
+  positions?: Record<string, SlotAdjust>;
   created_at: string;
 };
 

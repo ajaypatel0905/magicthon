@@ -3,19 +3,41 @@
 import { useMemo } from "react";
 import type { Template } from "@/lib/templates";
 
+export type SlotAdjust = {
+  /** X offset in % of container width. */
+  dx?: number;
+  /** Y offset in % of container height. */
+  dy?: number;
+  /** Font-size multiplier (1 = default). */
+  scale?: number;
+  /** Override text color. */
+  color?: string;
+};
+
 type Props = {
   template: Template;
   photo: string;
   captions: Record<string, string>;
-  /** Per-slot Y-axis offset in % of container height. */
-  positions?: Record<string, { dy: number }>;
+  positions?: Record<string, SlotAdjust>;
   className?: string;
 };
 
 function slotStyle(positions: Props["positions"], key: string): React.CSSProperties {
   const p = positions?.[key];
-  if (!p?.dy) return {};
-  return { transform: `translateY(${p.dy}%)` };
+  if (!p) return {};
+  const tx = p.dx ?? 0;
+  const ty = p.dy ?? 0;
+  if (!tx && !ty) return {};
+  return { transform: `translate(${tx}%, ${ty}%)` };
+}
+
+function slotTextStyle(positions: Props["positions"], key: string): React.CSSProperties {
+  const p = positions?.[key];
+  if (!p) return {};
+  const style: React.CSSProperties = {};
+  if (p.scale && p.scale !== 1) style.fontSize = `${p.scale}em`;
+  if (p.color) style.color = p.color;
+  return style;
 }
 
 // Impact-style outlined caption used by classic memes.
@@ -24,10 +46,12 @@ function ImpactText({
   text,
   big = false,
   className = "",
+  style,
 }: {
   text: string;
   big?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const len = text.length;
   const size = big
@@ -43,6 +67,7 @@ function ImpactText({
         : "text-[clamp(18px,5.5cqw,40px)]";
   return (
     <span
+      style={style}
       className={`font-[family-name:var(--font-display)] font-extrabold uppercase leading-[0.95] text-white text-center break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000,_0_0_18px_rgba(0,0,0,.55)] ${size} ${className}`}
     >
       {text}
@@ -78,14 +103,22 @@ export default function MemePreview({
             style={slotStyle(positions, "top")}
             className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3 touch-none"
           >
-            <ImpactText text={c.top} className="max-w-[95%]" />
+            <ImpactText
+              text={c.top}
+              className="max-w-[95%]"
+              style={slotTextStyle(positions, "top")}
+            />
           </div>
           <div
             data-slot="bottom"
             style={slotStyle(positions, "bottom")}
             className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-3 touch-none"
           >
-            <ImpactText text={c.bottom} className="max-w-[95%]" />
+            <ImpactText
+              text={c.bottom}
+              className="max-w-[95%]"
+              style={slotTextStyle(positions, "bottom")}
+            />
           </div>
         </Frame>
       );
@@ -99,7 +132,12 @@ export default function MemePreview({
             style={slotStyle(positions, "bottom")}
             className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-4 touch-none"
           >
-            <ImpactText text={c.bottom} big className="max-w-[95%]" />
+            <ImpactText
+              text={c.bottom}
+              big
+              className="max-w-[95%]"
+              style={slotTextStyle(positions, "bottom")}
+            />
           </div>
         </Frame>
       );

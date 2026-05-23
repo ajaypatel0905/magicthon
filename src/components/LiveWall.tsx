@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import MemePreview from "@/components/MemePreview";
+import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
 import { supabaseBrowser } from "@/lib/supabase";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 
@@ -12,7 +12,7 @@ type Meme = {
   photo_url: string;
   template_id: string;
   captions: Record<string, string>;
-  positions?: Record<string, { dy: number }>;
+  positions?: Record<string, SlotAdjust>;
   created_at: string;
 };
 

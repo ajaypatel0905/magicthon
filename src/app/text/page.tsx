@@ -157,27 +157,24 @@ export default function TextPage() {
 
         {loading && (
           <div className="mt-8">
-            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <LoadingTicker variant="cook" />
-              <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/35">
-                · captions + 6 images · ~30s
-              </span>
+            <div className="mb-3 font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/40">
+              captions + 6 images · ~30s
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, n) => (
                 <div
                   key={n}
-                  className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden"
+                  className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-4 text-center"
                 >
                   <div
                     className="absolute inset-0 bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)] animate-pulse"
                     style={{ animationDelay: `${n * 150}ms` }}
                   />
-                  <div className="absolute bottom-2 left-2 right-2">
+                  <div className="relative z-10">
                     <LoadingTicker
                       variant={n % 2 ? "paint" : "cook"}
-                      intervalMs={2800 + n * 200}
-                      className="!text-[9px]"
+                      intervalMs={2600 + n * 220}
+                      className="!text-[11px] !text-paper/80"
                     />
                   </div>
                 </div>

@@ -3,8 +3,16 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
-import MemePreview from "@/components/MemePreview";
+import MemePreview, { type SlotAdjust } from "@/components/MemePreview";
 import { TEMPLATES, TEMPLATE_BY_ID, type Template } from "@/lib/templates";
+
+const COLOR_SWATCHES = [
+  { key: "white", value: "#ffffff" },
+  { key: "acid", value: "#c6f24e" },
+  { key: "yellow", value: "#ffd23a" },
+  { key: "hot", value: "#ff5436" },
+  { key: "black", value: "#000000" },
+] as const;
 
 type Suggestion = {
   template_id: string;
@@ -42,7 +50,7 @@ export default function MemeEditor({
   const [captions, setCaptions] = useState<Record<string, string>>({
     ...initial.captions,
   });
-  const [positions, setPositions] = useState<Record<string, { dy: number }>>({});
+  const [positions, setPositions] = useState<Record<string, SlotAdjust>>({});
   const [shipping, setShipping] = useState(false);
   const [shipError, setShipError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"png" | "copy" | null>(null);
@@ -222,15 +230,23 @@ export default function MemeEditor({
     if (!key) return;
     const rect = renderRef.current?.getBoundingClientRect();
     if (!rect) return;
+    const startX = e.clientX;
     const startY = e.clientY;
-    const startDy = positions[key]?.dy ?? 0;
+    const existing = positions[key] ?? {};
+    const startDx = existing.dx ?? 0;
+    const startDy = existing.dy ?? 0;
     setDraggingSlot(key);
     target.setPointerCapture(e.pointerId);
 
     function move(ev: PointerEvent) {
+      const dxPct = ((ev.clientX - startX) / rect!.width) * 100;
       const dyPct = ((ev.clientY - startY) / rect!.height) * 100;
-      const next = Math.max(-50, Math.min(50, startDy + dyPct));
-      setPositions((p) => ({ ...p, [key!]: { dy: next } }));
+      const nx = Math.max(-45, Math.min(45, startDx + dxPct));
+      const ny = Math.max(-50, Math.min(50, startDy + dyPct));
+      setPositions((p) => ({
+        ...p,
+        [key!]: { ...(p[key!] ?? {}), dx: nx, dy: ny },
+      }));
     }
     function up(ev: PointerEvent) {
       try { target!.releasePointerCapture(ev.pointerId); } catch {}
@@ -242,6 +258,18 @@ export default function MemeEditor({
     target.addEventListener("pointermove", move);
     target.addEventListener("pointerup", up);
     target.addEventListener("pointercancel", up);
+  }
+
+  function updateAdjust(key: string, patch: Partial<SlotAdjust>) {
+    setPositions((p) => ({ ...p, [key]: { ...(p[key] ?? {}), ...patch } }));
+  }
+
+  function resetAdjust(key: string) {
+    setPositions((p) => {
+      const next = { ...p };
+      delete next[key];
+      return next;
+    });
   }
 
   return (
@@ -337,11 +365,27 @@ export default function MemeEditor({
           {tpl.slots.map((slot) => {
             const v = captions[slot.key] ?? "";
             const long = (slot.maxChars ?? 80) > 60;
+            const adj = positions[slot.key] ?? {};
+            const hasAdjust =
+              (adj.dx ?? 0) !== 0 ||
+              (adj.dy ?? 0) !== 0 ||
+              (adj.scale ?? 1) !== 1 ||
+              adj.color !== undefined;
             return (
-              <label key={slot.key} className="block">
-                <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/60 mb-1 block">
-                  {slot.label}
-                </span>
+              <div key={slot.key} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/60">
+                    {slot.label}
+                  </span>
+                  {hasAdjust && (
+                    <button
+                      onClick={() => resetAdjust(slot.key)}
+                      className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/45 hover:text-acid"
+                    >
+                      reset
+                    </button>
+                  )}
+                </div>
                 {long ? (
                   <textarea
                     value={v}
@@ -362,7 +406,82 @@ export default function MemeEditor({
                     className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
                   />
                 )}
-              </label>
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {/* Size controls */}
+                  <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
+                    <button
+                      onClick={() =>
+                        updateAdjust(slot.key, {
+                          scale: Math.max(0.5, +(((adj.scale ?? 1) - 0.1).toFixed(2))),
+                        })
+                      }
+                      title="smaller"
+                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                    >
+                      A−
+                    </button>
+                    <span className="font-[family-name:var(--font-mono)] text-[10px] px-1 text-paper/45 select-none">
+                      {((adj.scale ?? 1) * 100).toFixed(0)}%
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateAdjust(slot.key, {
+                          scale: Math.min(2, +(((adj.scale ?? 1) + 0.1).toFixed(2))),
+                        })
+                      }
+                      title="bigger"
+                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                    >
+                      A+
+                    </button>
+                  </div>
+
+                  {/* Color swatches */}
+                  <div className="flex items-center gap-1 px-1">
+                    {COLOR_SWATCHES.map((s) => {
+                      const isActive =
+                        (adj.color ?? "#ffffff").toLowerCase() === s.value.toLowerCase();
+                      return (
+                        <button
+                          key={s.key}
+                          onClick={() => updateAdjust(slot.key, { color: s.value })}
+                          title={`color: ${s.key}`}
+                          className={`w-5 h-5 rounded-full border ${
+                            isActive ? "ring-2 ring-acid" : "border-[var(--line)]"
+                          }`}
+                          style={{ background: s.value }}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* X-axis nudge buttons (in addition to drag) */}
+                  <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
+                    <button
+                      onClick={() =>
+                        updateAdjust(slot.key, {
+                          dx: Math.max(-45, (adj.dx ?? 0) - 5),
+                        })
+                      }
+                      title="nudge left"
+                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateAdjust(slot.key, {
+                          dx: Math.min(45, (adj.dx ?? 0) + 5),
+                        })
+                      }
+                      title="nudge right"
+                      className="px-2 py-1 text-xs hover:bg-ink-2"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

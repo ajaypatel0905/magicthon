@@ -5,6 +5,7 @@ import { supabaseService } from "@/lib/supabase";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 import MemeViewer from "@/components/MemeViewer";
 import BackButton from "@/components/BackButton";
+import type { SlotAdjust } from "@/components/MemePreview";
 
 export const dynamic = "force-dynamic";
 
@@ -119,7 +120,7 @@ export default async function MemePage({
           template={tpl}
           photoUrl={meme.photo_url}
           captions={meme.captions as Record<string, string>}
-          positions={(meme.positions ?? {}) as Record<string, { dy: number }>}
+          positions={(meme.positions ?? {}) as Record<string, SlotAdjust>}
           initialCounts={initialCounts}
           code={meme.code}
         />

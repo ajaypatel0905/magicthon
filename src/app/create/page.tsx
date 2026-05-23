@@ -106,14 +106,9 @@ export default function CreatePage() {
         >
           ← back
         </Link>
-        <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-2 tracking-tight">
+        <h1 className="font-[family-name:var(--font-display)] font-extrabold text-4xl sm:text-6xl mt-4 mb-4 tracking-tight">
           {loading ? "Cooking your six." : data ? "Pick one." : "Drop a photo."}
         </h1>
-        {loading && (
-          <div className="mb-6">
-            <LoadingTicker variant="cook" />
-          </div>
-        )}
         {data && (
           <p className="text-paper/70 mb-6 text-sm sm:text-base">
             <span className="text-paper/40">model saw:</span>{" "}
@@ -130,8 +125,19 @@ export default function CreatePage() {
             {Array.from({ length: 6 }).map((_, n) => (
               <div
                 key={n}
-                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] animate-pulse"
-              />
+                className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-3 text-center"
+              >
+                <div
+                  className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]"
+                  style={{ animationDelay: `${n * 130}ms` }}
+                />
+                <div className="relative z-10">
+                  <LoadingTicker
+                    intervalMs={2600 + n * 220}
+                    className="!text-[10px] !text-paper/70"
+                  />
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -235,12 +241,18 @@ function LoadingGrid({ photo }: { photo: string }) {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden"
+            className="aspect-square rounded-md bg-ink-2 border border-[var(--line)] relative overflow-hidden flex items-center justify-center p-3 text-center"
           >
             <div
               className="absolute inset-0 animate-pulse bg-gradient-to-br from-[var(--ink-2)] via-[#22221c] to-[var(--ink-2)]"
               style={{ animationDelay: `${i * 130}ms` }}
             />
+            <div className="relative z-10">
+              <LoadingTicker
+                intervalMs={2400 + i * 270}
+                className="!text-[10px] !text-paper/80 !tracking-wider"
+              />
+            </div>
           </div>
         ))}
       </div>

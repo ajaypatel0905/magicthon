@@ -13,7 +13,17 @@ const Body = z.object({
   image: z.string().min(10), // data URL or http URL
   template_id: z.string().min(1),
   captions: z.record(z.string(), z.string()),
-  positions: z.record(z.string(), z.object({ dy: z.number() })).optional(),
+  positions: z
+    .record(
+      z.string(),
+      z.object({
+        dx: z.number().optional(),
+        dy: z.number().optional(),
+        scale: z.number().optional(),
+        color: z.string().optional(),
+      }),
+    )
+    .optional(),
   observations: z.array(z.string()).optional(),
 });
 
