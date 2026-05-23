@@ -821,13 +821,21 @@ function SelectionOverlay({
           ×
         </button>
       </div>
-      {/* corner resize handle */}
+      {/* corner resize handle — big tap target on phone */}
       <div
         onPointerDown={onHandleDown}
-        className="absolute z-30 w-4 h-4 -translate-x-1/2 -translate-y-1/2 bg-acid border-2 border-ink rounded-full cursor-nwse-resize touch-none shadow-md"
-        style={{ left: box.left + box.width + 6, top: box.top + box.height + 6 }}
+        className="absolute z-30 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize select-none"
+        style={{
+          left: box.left + box.width + 6,
+          top: box.top + box.height + 6,
+          width: 36,
+          height: 36,
+          touchAction: "none",
+        }}
         title="drag to resize"
-      />
+      >
+        <span className="block w-5 h-5 bg-acid border-2 border-ink rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+      </div>
     </>
   );
 }
