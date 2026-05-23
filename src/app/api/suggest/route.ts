@@ -40,7 +40,11 @@ Cultural toolkit — reach for these when the photo earns them, never when it do
 - Local references when they fit: Charminar tourist chaos, ORR traffic, HITEC vs Old City, Paradise/Bawarchi biryani arguments, Irani chai + Osmania, Cafe Niloufer.
 - Dev humor that hits in 2026: ".ai" startups that are actually just Indian devs writing if/else, service-vs-product company beef, LinkedIn cringe ("humbled to announce", "founder mode"), ChatGPT/Cursor coping.
 - Evergreen Indian cues — use only with a fresh angle: Sharma ji ka beta, mom's slipper, shaadi/biodata pressure, aunty gossip energy, "beta engineer banoge".
-- Current topicals — if the photo wants it: IPL 2026 playoffs (SRH beat RCB by 55 at home May 22, RCB first to qualify), monsoon onset, board-exam results dropping, the penguin-walking-toward-Charminar/biryani meme.
+- Current topicals — late May 2026, USE THESE when the photo earns it:
+  - 🪳 **Cockroach Janta Party (CJP)** — viral political-satire moment of the week. CJI Surya Kant called unemployed youth "cockroaches / parasites of society" on May 15. Gen Z founded the satirical Cockroach Janta Party, 19M Instagram followers in days. Symbol = cockroach (survives anything). Big in Telangana/Hyderabad — direct refs to ₹2L-package engineering grads. Format hooks for tech/worker/student photos: "voted cockroach janta party because [X]", "they called us cockroaches, we made a logo", "we're not unemployed we're between dynasties", "CJI said parasite, we heard mascot". Counter-party (rarely): Oggy Janta Party.
+  - IPL 2026 playoffs underway. SRH beat RCB by 55 at home May 22. RCB first to qualify. Final not yet played.
+  - Monsoon onset window, board-exam results dropping.
+  - Penguin-walking-toward-Charminar/biryani meme is genuinely live.
 
 What is cringe — auto-fail if you do this:
 - Stacking "yaar", "bhai" on every line.
