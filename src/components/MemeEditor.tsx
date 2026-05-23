@@ -17,6 +17,7 @@ const COLOR_SWATCHES = [
 type Suggestion = {
   template_id: string;
   captions: Record<string, string>;
+  positions?: Record<string, SlotAdjust>;
   why: string;
   image_prompt?: string;
 };
@@ -50,7 +51,7 @@ export default function MemeEditor({
   const [captions, setCaptions] = useState<Record<string, string>>({
     ...initial.captions,
   });
-  const [positions, setPositions] = useState<Record<string, SlotAdjust>>({});
+  const [positions, setPositions] = useState<Record<string, SlotAdjust>>(initial.positions ?? {});
   const [shipping, setShipping] = useState(false);
   const [shipError, setShipError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"png" | "copy" | null>(null);
@@ -80,6 +81,26 @@ export default function MemeEditor({
   function commit() {
     setPast((p) => [...p, snap()].slice(-30));
     setFuture([]);
+  }
+
+  // For caption typing: hold the pre-edit snapshot, push it to history after
+  // ~700ms of inactivity. Each idle pause becomes one undoable unit.
+  const captionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const captionPreEditRef = useRef<Snapshot | null>(null);
+  function captionCommitDebounced() {
+    if (!captionPreEditRef.current) {
+      captionPreEditRef.current = snap();
+    }
+    if (captionTimerRef.current) clearTimeout(captionTimerRef.current);
+    captionTimerRef.current = setTimeout(() => {
+      const pre = captionPreEditRef.current;
+      if (pre) {
+        setPast((p) => [...p, pre].slice(-30));
+        setFuture([]);
+      }
+      captionPreEditRef.current = null;
+      captionTimerRef.current = null;
+    }, 700);
   }
   function apply(s: Snapshot) {
     setTemplateId(s.templateId);
@@ -671,9 +692,10 @@ export default function MemeEditor({
                       inputRefs.current[slot.key] = el;
                     }}
                     value={v}
-                    onChange={(e) =>
-                      setCaptions((c) => ({ ...c, [slot.key]: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      captionCommitDebounced();
+                      setCaptions((c) => ({ ...c, [slot.key]: e.target.value }));
+                    }}
                     rows={2}
                     maxLength={(slot.maxChars ?? 200) + 30}
                     className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-base text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
@@ -684,9 +706,10 @@ export default function MemeEditor({
                       inputRefs.current[slot.key] = el;
                     }}
                     value={v}
-                    onChange={(e) =>
-                      setCaptions((c) => ({ ...c, [slot.key]: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      captionCommitDebounced();
+                      setCaptions((c) => ({ ...c, [slot.key]: e.target.value }));
+                    }}
                     maxLength={(slot.maxChars ?? 200) + 30}
                     className="w-full bg-ink-2 border border-[var(--line)] rounded px-3 py-2 text-base text-paper focus:outline-none focus:border-acid font-[family-name:var(--font-body)]"
                   />
@@ -857,18 +880,18 @@ export default function MemeEditor({
                 onClick={undo}
                 disabled={past.length === 0}
                 title="undo (⌘Z)"
-                className="px-3 py-1.5 text-xs font-[family-name:var(--font-mono)] uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-3 py-1.5 text-[11px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <span>↶</span>
-                <span className="hidden sm:inline">undo</span>
+                <span>undo</span>
               </button>
               <button
                 onClick={redo}
                 disabled={future.length === 0}
                 title="redo (⇧⌘Z)"
-                className="px-3 py-1.5 text-xs font-[family-name:var(--font-mono)] uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed border-l border-[var(--line)] flex items-center gap-1.5"
+                className="px-3 py-1.5 text-[11px] font-[family-name:var(--font-mono)] font-bold uppercase tracking-widest hover:bg-ink-2 disabled:opacity-40 disabled:cursor-not-allowed border-l border-[var(--line)] flex items-center gap-1.5"
               >
-                <span className="hidden sm:inline">redo</span>
+                <span>redo</span>
                 <span>↷</span>
               </button>
             </div>

@@ -10,6 +10,7 @@ import { TEMPLATE_BY_ID } from "@/lib/templates";
 type Suggestion = {
   template_id: string;
   captions: Record<string, string>;
+  positions?: Record<string, { dx?: number; dy?: number; scale?: number; color?: string; textCase?: "upper"|"lower"|"title"|"none"; rotation?: number }>;
   why: string;
 };
 
@@ -320,7 +321,7 @@ function SuggestionGrid({
                 : "ring-1 ring-[var(--line)] hover:ring-acid/60"
             }`}
           >
-            <MemePreview template={tpl} photo={photo} captions={s.captions} />
+            <MemePreview template={tpl} photo={photo} captions={s.captions} positions={s.positions} />
             <div className="px-2 py-2">
               <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-acid mb-1">
                 {tpl.name}
