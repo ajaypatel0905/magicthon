@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import WebcamCapture from "@/components/WebcamCapture";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -25,6 +26,7 @@ export default function UploadDropzone({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pulse, setPulse] = useState(autoFocus);
+  const [webcamOpen, setWebcamOpen] = useState(false);
 
   // On desktop landing: briefly pulse the dropzone so the user's eye lands here.
   useEffect(() => {
@@ -121,17 +123,7 @@ export default function UploadDropzone({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Create a camera-only file input on demand so the main picker
-            // stays at "Photos / Files".
-            const cam = document.createElement("input");
-            cam.type = "file";
-            cam.accept = "image/*";
-            cam.setAttribute("capture", "environment");
-            cam.onchange = () => {
-              const f = cam.files?.[0];
-              if (f) void handle(f);
-            };
-            cam.click();
+            setWebcamOpen(true);
           }}
           className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/55 hover:text-acid underline underline-offset-4 decoration-paper/20"
         >
@@ -143,6 +135,14 @@ export default function UploadDropzone({
           {error}
         </p>
       )}
+      <WebcamCapture
+        open={webcamOpen}
+        onClose={() => setWebcamOpen(false)}
+        onCapture={(f) => {
+          setWebcamOpen(false);
+          void handle(f);
+        }}
+      />
     </div>
   );
 }

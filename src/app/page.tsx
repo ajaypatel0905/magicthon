@@ -123,9 +123,8 @@ export default function Home() {
               <RotatingText lines={HERO_TAGLINES} intervalMs={5000} />
             </p>
 
-            {/* Glassy dropzone container — same on mobile + desktop now;
-                tapping opens the file picker directly (no scroll). */}
-            <div className="glass rounded-2xl p-5">
+            {/* Glassy dropzone — sized to match the meme demo on the right. */}
+            <div className="glass rounded-2xl p-5 max-w-md mx-auto lg:mx-0">
               <UploadDropzone autoFocus />
               <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 justify-center sm:justify-start">
                 <TrySampleButton />

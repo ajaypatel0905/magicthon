@@ -23,12 +23,22 @@
   --font-mono: var(--font-mono);
 }
 
-html,
+html {
+  /* Body sits above this. When iOS rubber-bands past the page edges, the
+     viewport reveals THIS background — so we tint it with subtle aurora
+     colors instead of solid black. Pull-to-refresh stays enabled. */
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 10%, rgba(198, 242, 78, 0.18), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 10% 90%, rgba(255, 84, 54, 0.14), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 60% 60%, rgba(110, 58, 255, 0.12), transparent 60%),
+    var(--ink);
+  background-attachment: fixed;
+  /* Prevent horizontal rubber-band only — vertical pull-to-refresh still works. */
+  overscroll-behavior-x: none;
+}
 body {
-  background: var(--ink);
+  background: transparent;
   color: var(--paper);
-  /* Kills iOS rubber-band that reveals plain black below/above the aurora. */
-  overscroll-behavior: none;
 }
 
 body {

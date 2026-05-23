@@ -60,6 +60,8 @@ export default function MemeEditor({
   const [regenBg, setRegenBg] = useState(false);
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiEditing, setAiEditing] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [slotBox, setSlotBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   const tpl: Template = TEMPLATE_BY_ID[templateId] ?? TEMPLATES[0];
 
@@ -77,6 +79,22 @@ export default function MemeEditor({
       /* ignore */
     }
     el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function selectSlot(key: string) {
+    setSelectedSlot(key);
+    const root = renderRef.current;
+    if (!root) return;
+    const el = root.querySelector<HTMLElement>(`[data-slot="${key}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const root_r = root.getBoundingClientRect();
+    setSlotBox({
+      left: r.left - root_r.left,
+      top: r.top - root_r.top,
+      width: r.width,
+      height: r.height,
+    });
   }
 
   const suggestionByTpl = useMemo(() => {
@@ -317,8 +335,14 @@ export default function MemeEditor({
       target!.removeEventListener("pointermove", move);
       target!.removeEventListener("pointerup", up);
       target!.removeEventListener("pointercancel", up);
-      // No drag = tap. Focus the corresponding caption input.
-      if (!didDrag) focusSlotInput(key!);
+      // No drag = tap. Select the slot (visual handle) AND focus input.
+      if (!didDrag) {
+        selectSlot(key!);
+        focusSlotInput(key!);
+      } else {
+        // After drag, refresh selection box to new position.
+        selectSlot(key!);
+      }
       setDraggingSlot(null);
     }
     target.addEventListener("pointermove", move);
@@ -355,6 +379,26 @@ export default function MemeEditor({
               positions={positions}
             />
           </div>
+
+          {/* Canva-style selection box + corner resize handle */}
+          {selectedSlot && slotBox && !aiEditing && (
+            <SelectionOverlay
+              key={selectedSlot}
+              slotKey={selectedSlot}
+              box={slotBox}
+              currentScale={positions[selectedSlot]?.scale ?? 1}
+              onResize={(nextScale) => {
+                updateAdjust(selectedSlot, { scale: nextScale });
+                // Re-measure after the next paint so the box follows.
+                requestAnimationFrame(() => selectSlot(selectedSlot));
+              }}
+              onClose={() => {
+                setSelectedSlot(null);
+                setSlotBox(null);
+              }}
+            />
+          )}
+
           {aiEditing && (
             <div className="absolute inset-0 z-20 rounded-md backdrop-blur-md bg-ink/55 flex flex-col items-center justify-center gap-3 text-center p-6">
               <div className="font-[family-name:var(--font-display)] font-extrabold text-xl text-acid">
@@ -703,5 +747,87 @@ export default function MemeEditor({
         )}
       </div>
     </div>
+  );
+}
+
+/** Canva-style dashed selection box with corner resize handle. */
+function SelectionOverlay({
+  slotKey,
+  box,
+  currentScale,
+  onResize,
+  onClose,
+}: {
+  slotKey: string;
+  box: { left: number; top: number; width: number; height: number };
+  currentScale: number;
+  onResize: (next: number) => void;
+  onClose: () => void;
+}) {
+  function onHandleDown(e: React.PointerEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget as HTMLDivElement;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScale = currentScale || 1;
+    const baseDiag = Math.hypot(box.width, box.height);
+    try { target.setPointerCapture(e.pointerId); } catch {}
+    function move(ev: PointerEvent) {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const delta = (dx + dy) / 2;
+      const factor = 1 + delta / (baseDiag * 0.5);
+      const next = Math.max(0.5, Math.min(2.5, startScale * factor));
+      onResize(+next.toFixed(2));
+    }
+    function up(ev: PointerEvent) {
+      try { target.releasePointerCapture(ev.pointerId); } catch {}
+      target.removeEventListener("pointermove", move);
+      target.removeEventListener("pointerup", up);
+      target.removeEventListener("pointercancel", up);
+    }
+    target.addEventListener("pointermove", move);
+    target.addEventListener("pointerup", up);
+    target.addEventListener("pointercancel", up);
+  }
+  return (
+    <>
+      {/* dashed selection box */}
+      <div
+        className="absolute pointer-events-none border-2 border-dashed border-acid rounded-sm z-30"
+        style={{
+          left: box.left - 6,
+          top: box.top - 6,
+          width: box.width + 12,
+          height: box.height + 12,
+        }}
+        aria-hidden
+      />
+      {/* slot label */}
+      <div
+        className="absolute z-30 pointer-events-auto font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest bg-acid text-ink px-2 py-0.5 rounded-sm flex items-center gap-2"
+        style={{ left: box.left - 6, top: Math.max(0, box.top - 22) }}
+      >
+        <span>{slotKey}</span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          aria-label="deselect"
+          className="text-base leading-none"
+        >
+          ×
+        </button>
+      </div>
+      {/* corner resize handle */}
+      <div
+        onPointerDown={onHandleDown}
+        className="absolute z-30 w-4 h-4 -translate-x-1/2 -translate-y-1/2 bg-acid border-2 border-ink rounded-full cursor-nwse-resize touch-none shadow-md"
+        style={{ left: box.left + box.width + 6, top: box.top + box.height + 6 }}
+        title="drag to resize"
+      />
+    </>
   );
 }
