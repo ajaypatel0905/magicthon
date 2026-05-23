@@ -25,6 +25,8 @@ export default function LiveWall({ initialMemes, initialCounts }: Props) {
   const [memes, setMemes] = useState<Meme[]>(initialMemes);
   const [counts, setCounts] = useState<Record<string, Record<string, number>>>(initialCounts);
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
+  // Tracks "memeId:emoji" tokens that just incremented — used to pulse the chip.
+  const [pulseKeys, setPulseKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -63,6 +65,15 @@ export default function LiveWall({ initialMemes, initialCounts }: Props) {
               [r.emoji]: ((c[r.meme_id]?.[r.emoji] ?? 0) + 1),
             },
           }));
+          const key = `${r.meme_id}:${r.emoji}`;
+          setPulseKeys((s) => new Set(s).add(key));
+          setTimeout(() => {
+            setPulseKeys((s) => {
+              const n = new Set(s);
+              n.delete(key);
+              return n;
+            });
+          }, 900);
         },
       )
       .subscribe();
@@ -113,15 +124,22 @@ export default function LiveWall({ initialMemes, initialCounts }: Props) {
             )}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 flex items-center gap-1.5 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
               {top.length > 0 ? (
-                top.map(([emoji, n]) => (
-                  <span
-                    key={emoji}
-                    className="rounded-full bg-ink/85 border border-acid/30 px-2 py-0.5 text-[12px] flex items-center gap-1"
-                  >
-                    <span>{emoji}</span>
-                    <span className="font-[family-name:var(--font-mono)] text-acid">{n}</span>
-                  </span>
-                ))
+                top.map(([emoji, n]) => {
+                  const isPulse = pulseKeys.has(`${m.id}:${emoji}`);
+                  return (
+                    <span
+                      key={emoji}
+                      className={`rounded-full bg-ink/85 border px-2 py-0.5 text-[12px] flex items-center gap-1 transition ${
+                        isPulse
+                          ? "border-acid scale-110 shadow-[0_0_12px_rgba(198,242,78,0.6)]"
+                          : "border-acid/30"
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                      <span className="font-[family-name:var(--font-mono)] text-acid">{n}</span>
+                    </span>
+                  );
+                })
               ) : (
                 <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-paper/55">
                   no reactions yet

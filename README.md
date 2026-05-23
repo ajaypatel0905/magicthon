@@ -9,6 +9,25 @@ Built for the **Magicthon** hackathon (Hyderabad, May 2026).
 
 ---
 
+## Screens
+
+![landing — make it a meme.](public/screens/landing.png)
+*Landing — animated aurora, hero meme rotates, glass dropzone right where your eye lands.*
+
+![cooking — 6 rotating slang lines while the model writes](public/screens/loading.png)
+*The wait is the product. 100+ slang lines (`ruk jaa bhai`, `claude is squinting at your photo`, `dhurandhar mode: cooking`, `drinks break, bhai`, `polishing the joke`) cycle inside every loading tile.*
+
+![pick — six photo-aware takes across six templates](public/screens/pick.png)
+*Six photo-grounded takes across six different templates. Every one references the photo specifically — no generic "POV:" captions.*
+
+![editor — Canva-style controls, drag text, AI image edit](public/screens/editor.png)
+*Tactile editor: drag any caption, scale, recolor (5 swatches + free picker), case toggle, X/Y nudge, clear, re-roll, and `edit with AI` that ships the rendered meme to Gemini for a fresh background.*
+
+![share — public link, live reactions, OG preview](public/screens/share.png)
+*Public link, no signup, reactions stream in live. `/m/<code>` links preview as the meme on WhatsApp, Twitter, Slack via dynamic OG images.*
+
+---
+
 ## What it does
 
 1. **Drop a photo** (drag, paste, or pick from gallery). Or skip — type a topic in text mode.
@@ -41,6 +60,54 @@ A `🪳` floating helper at the bottom-right is **Bawa** — an in-app chat help
 | OG / Twitter cards | Next.js `ImageResponse` (1200×630 per meme, edge-cacheable) |
 
 No auth, no backend service of our own — everything's serverless on Vercel + Supabase.
+
+---
+
+## Why this stack
+
+### Next.js 16 (App Router, RSC, Turbopack)
+Server Components mean the meme grid, the wall, OG cards, and observations all render server-side with zero JS shipped. Only the editor, viewer reactions, and the Bawa widget ship JS. Page weight stays small with no manual code-splitting. One framework covers UI + API routes + image generation (`ImageResponse` for OG cards) + middleware + static serving — no separate Express/Hono backend. Vercel-native (streaming, edge), built-in `next/font` for subsetted Google fonts with `display: swap`.
+
+### TypeScript, strict
+Hackathon means refactoring on the hour. Strict TS catches API drift between client and server — caught 3 such bugs while extending `SlotAdjust` from `{dy}` → `{dx, dy, scale, color, textCase}`.
+
+### Tailwind 4
+No file-switching while iterating. Custom palette is one `@theme inline` block in `globals.css` (`--color-acid`, `--color-ink`, …); every component reads from it. Container queries (`cqw`) let meme captions scale to the meme box, not the viewport — critical for the masonry wall and editor preview.
+
+### Fonts: Bricolage Grotesque / Space Grotesk / JetBrains Mono
+Chunky display font for posters, legible-with-quirks body, mono for eyebrows and slang ticker. All subsetted to `latin`, all `display: swap` (no FOIT).
+
+### Vercel
+Native Next.js integration — Image optimization, Edge runtime, ImageResponse, streaming all work out of the box. Free tier handles the workload. `git push` → autodeploy in ~25s; `vercel env` / `vercel --prod` from local for hot-fix flow.
+
+### Supabase
+Postgres + Object Storage + Realtime + RLS in one SDK. Realtime over Postgres LISTEN/NOTIFY drives the live wall — when a row lands in `reactions` or `memes`, every browser gets it in <500ms. Without that we'd need WebSockets or polling. RLS lets us go anonymous-public safely (no signup, but no spam at the DB level). One backend, one bill.
+
+### OpenRouter (LLM gateway)
+One key, every model. Captions/chat use `anthropic/claude-sonnet-4.6`, image generation uses `google/gemini-2.5-flash-image`, both through the same `chat/completions` endpoint with one auth header. Switching models is one string change. The hackathon explicitly provides an OpenRouter key — billing is taken care of for us. OpenAI-compatible API surface means low risk.
+
+### Claude Sonnet 4.6 for captions + chat
+3-4× cheaper and 2× faster than Opus 4.7. Caption quality on this task (vision → multi-template JSON, Indian/Hyderabadi voice handling) is already excellent in our testing. Opus only when we genuinely need it; we don't.
+
+### Gemini 2.5 Flash Image for backgrounds
+Returns the image inline as base64 in a single OpenRouter call — no polling, no second call. ~3-5s per image, ~$0.04 each. Six in parallel = ~6-10s total. We tried Pollinations first (free, Flux-backed) but cold-start was 30-60s and browsers gave up. Gemini's reliability pays for itself in demo-day risk.
+
+### zod
+Every API surface — `/api/suggest`, `/api/memes`, `/api/reroll`, `/api/edit-image`, `/api/feedback`, `/api/chat` — parses its body with a zod schema before doing anything. Same goes for the model's JSON output. `z.infer` gives us TS types that match runtime checks. Bad input dies at the door.
+
+### nanoid with custom alphabet
+Default nanoid alphabet has `0/o/l/I/1/-` — visually confusable. Share URLs get verbally shared too. Custom alphabet `abcdefghkmnpqrstuvwxyz23456789` at 6 chars gives 36 billion possibilities, zero collision risk at hackathon scale, and is readable when scrawled on a sticky note.
+
+### html-to-image (lazy-loaded)
+The meme is already DOM (Tailwind + container queries). Re-implementing as canvas drawing commands would mean maintaining two renderers. html-to-image walks the live DOM and serializes to PNG. We lazy-load it (`await import("html-to-image")` inside the export click handler) so non-editor pages don't pay the ~20KB.
+
+### Next.js `ImageResponse` for OG cards
+One file (`/api/og/[code]/route.tsx`) renders a 1200×630 PNG per meme on demand using a JSX subset. Edge-cacheable (`s-maxage=86400`). Drops directly into `og:image` + `twitter:image` via `generateMetadata`. WhatsApp / Twitter / Slack previews work out of the box.
+
+### Conscious "no" choices
+- **No auth** — brief says no signup wall. Anonymous reads + inserts via RLS.
+- **No standalone backend** — every endpoint is a Next.js route handler. Serverless scales it. No servers to manage.
+- **No state in our process** — all state lives in Supabase; functions are stateless, scale to zero.
 
 ---
 
