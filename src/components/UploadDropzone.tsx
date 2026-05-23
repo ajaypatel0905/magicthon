@@ -14,12 +14,24 @@ async function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-export default function UploadDropzone() {
+export default function UploadDropzone({
+  autoFocus = false,
+}: {
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pulse, setPulse] = useState(autoFocus);
+
+  // On desktop landing: briefly pulse the dropzone so the user's eye lands here.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const t = setTimeout(() => setPulse(false), 2400);
+    return () => clearTimeout(t);
+  }, [autoFocus]);
 
   const handle = useCallback(
     async (file: File) => {
@@ -77,10 +89,12 @@ export default function UploadDropzone() {
         }}
         className={[
           "block cursor-pointer rounded-lg border-2 border-dashed transition",
-          "px-6 py-10 text-center",
+          "px-6 py-8 sm:py-10 text-center",
           dragging
             ? "border-acid bg-[rgba(198,242,78,0.08)]"
-            : "border-[var(--line)] bg-ink-2 hover:border-acid/60",
+            : pulse
+              ? "border-acid bg-[rgba(198,242,78,0.06)] shadow-[0_0_0_4px_rgba(198,242,78,0.18)]"
+              : "border-[var(--line)] bg-ink-2 hover:border-acid/60",
           busy ? "opacity-60 pointer-events-none" : "",
         ].join(" ")}
       >

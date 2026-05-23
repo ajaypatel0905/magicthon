@@ -304,8 +304,9 @@ export default function MemeEditor({
       }
       const dxPct = (dxPx / rect!.width) * 100;
       const dyPct = (dyPx / rect!.height) * 100;
-      const nx = Math.max(-45, Math.min(45, startDx + dxPct));
-      const ny = Math.max(-50, Math.min(50, startDy + dyPct));
+      // Clamp tight — text stays inside the visible image area.
+      const nx = Math.max(-35, Math.min(35, startDx + dxPct));
+      const ny = Math.max(-40, Math.min(40, startDy + dyPct));
       setPositions((p) => ({
         ...p,
         [key!]: { ...(p[key!] ?? {}), dx: nx, dy: ny },

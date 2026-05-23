@@ -124,33 +124,15 @@ export default function Home() {
               <RotatingText lines={HERO_TAGLINES} intervalMs={5000} />
             </p>
 
-            {/* Glassy dropzone container */}
-            <div className="hidden sm:block glass rounded-2xl p-5">
-              <UploadDropzone />
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {/* Glassy dropzone container — same on mobile + desktop now;
+                tapping opens the file picker directly (no scroll). */}
+            <div className="glass rounded-2xl p-5">
+              <UploadDropzone autoFocus />
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 justify-center sm:justify-start">
                 <TrySampleButton />
                 <Link
                   href="/text"
                   className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4 decoration-paper/20 hover:decoration-acid"
-                >
-                  no photo? try text mode →
-                </Link>
-              </div>
-            </div>
-
-            {/* Mobile compact CTAs */}
-            <div className="sm:hidden space-y-3">
-              <Link
-                href="#upload"
-                className="block w-full text-center bg-acid text-ink font-[family-name:var(--font-mono)] text-[13px] font-bold uppercase tracking-widest px-5 py-4 rounded-lg shadow-[0_6px_24px_rgba(198,242,78,0.35)]"
-              >
-                drop a photo →
-              </Link>
-              <div className="text-center flex flex-col items-center gap-2">
-                <TrySampleButton />
-                <Link
-                  href="/text"
-                  className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/70 hover:text-acid underline underline-offset-4"
                 >
                   no photo? try text mode →
                 </Link>

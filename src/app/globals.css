@@ -27,6 +27,8 @@ html,
 body {
   background: var(--ink);
   color: var(--paper);
+  /* Kills iOS rubber-band that reveals plain black below/above the aurora. */
+  overscroll-behavior: none;
 }
 
 body {

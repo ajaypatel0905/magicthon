@@ -220,12 +220,14 @@ function ErrorCard({
 }) {
   return (
     <div className="space-y-4">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={photo}
-        alt="your upload"
-        className="w-full max-h-[35svh] object-contain rounded-lg border border-[var(--line)]"
-      />
+      <div className="flex justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo}
+          alt="your upload"
+          className="max-h-[35svh] max-w-full w-auto rounded-lg"
+        />
+      </div>
       <div className="rounded-lg border border-hot/40 bg-[rgba(255,84,54,0.05)] p-5">
         <div className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-hot mb-2">
           model said nakko
@@ -245,12 +247,14 @@ function ErrorCard({
 function LoadingGrid({ photo }: { photo: string }) {
   return (
     <div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={photo}
-        alt="your upload"
-        className="w-full max-h-[30svh] object-contain rounded-lg border border-[var(--line)] mb-6"
-      />
+      <div className="mb-6 flex justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo}
+          alt="your upload"
+          className="max-h-[30svh] max-w-full w-auto rounded-lg"
+        />
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div

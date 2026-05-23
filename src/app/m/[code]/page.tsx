@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { supabaseService } from "@/lib/supabase";
 import { TEMPLATE_BY_ID } from "@/lib/templates";
 import MemeViewer from "@/components/MemeViewer";
-import BackButton from "@/components/BackButton";
 import type { SlotAdjust } from "@/components/MemePreview";
 
 export const dynamic = "force-dynamic";
@@ -101,11 +100,10 @@ export default async function MemePage({
   return (
     <main className="min-h-[100svh] px-4 py-8 sm:py-12">
       <div className="max-w-xl mx-auto">
-        <div className="flex items-center justify-between gap-3">
-          <BackButton fallbackHref="/" label="← back" />
+        <div className="flex items-center justify-end">
           <Link
             href="/"
-            className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-widest text-paper/45 hover:text-acid"
+            className="font-[family-name:var(--font-mono)] text-[12px] uppercase tracking-widest text-paper/60 hover:text-acid"
           >
             magicthon
           </Link>
