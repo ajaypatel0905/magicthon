@@ -12,6 +12,8 @@ export type SlotAdjust = {
   scale?: number;
   /** Override text color. */
   color?: string;
+  /** Case: "upper" / "lower" / "title" / "none" (use template default). */
+  textCase?: "upper" | "lower" | "title" | "none";
 };
 
 type Props = {
@@ -37,6 +39,9 @@ function slotTextStyle(positions: Props["positions"], key: string): React.CSSPro
   const style: React.CSSProperties = {};
   if (p.scale && p.scale !== 1) style.fontSize = `${p.scale}em`;
   if (p.color) style.color = p.color;
+  if (p.textCase === "upper") style.textTransform = "uppercase";
+  else if (p.textCase === "lower") style.textTransform = "lowercase";
+  else if (p.textCase === "title") style.textTransform = "capitalize";
   return style;
 }
 
@@ -147,8 +152,8 @@ export default function MemePreview({
         <Frame className={className}>
           <div
             data-slot="caption"
-            className="bg-white text-ink px-4 py-3 text-[clamp(13px,3.4cqw,18px)] font-[family-name:var(--font-body)] leading-snug"
-            style={slotTextStyle(positions, "caption")}
+            className="bg-white text-ink px-4 py-3 text-[clamp(13px,3.4cqw,18px)] font-[family-name:var(--font-body)] leading-snug touch-none"
+            style={{ ...slotStyle(positions, "caption"), ...slotTextStyle(positions, "caption") }}
           >
             {c.caption}
           </div>
@@ -179,16 +184,16 @@ export default function MemePreview({
               {!isTextMode && (
                 <div
                   data-slot="title"
-                  className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none"
-                  style={slotTextStyle(positions, "title")}
+                  className="font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.15em] text-[clamp(20px,6cqw,40px)] leading-none touch-none"
+                  style={{ ...slotStyle(positions, "title"), ...slotTextStyle(positions, "title") }}
                 >
                   {c.title}
                 </div>
               )}
               <div
                 data-slot="subtitle"
-                className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1 px-2 leading-snug"
-                style={slotTextStyle(positions, "subtitle")}
+                className="font-[family-name:var(--font-body)] italic text-[clamp(11px,3cqw,16px)] text-white/80 mt-1 px-2 leading-snug touch-none"
+                style={{ ...slotStyle(positions, "subtitle"), ...slotTextStyle(positions, "subtitle") }}
               >
                 {c.subtitle}
               </div>
@@ -202,8 +207,15 @@ export default function MemePreview({
         <Frame className={className}>
           <PhotoLayer src={photo} />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/70" />
-          <div className="absolute top-2 left-3 right-3 flex items-baseline justify-between">
-            <div className="font-[family-name:var(--font-display)] font-extrabold uppercase text-acid text-[clamp(20px,7cqw,44px)] leading-none tracking-tight">
+          <div
+            data-slot="masthead"
+            style={slotStyle(positions, "masthead")}
+            className="absolute top-2 left-3 right-3 flex items-baseline justify-between touch-none"
+          >
+            <div
+              className="font-[family-name:var(--font-display)] font-extrabold uppercase text-acid text-[clamp(20px,7cqw,44px)] leading-none tracking-tight"
+              style={slotTextStyle(positions, "masthead")}
+            >
               {c.masthead}
             </div>
             <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-white/70">
@@ -211,10 +223,18 @@ export default function MemePreview({
             </div>
           </div>
           <div className="absolute left-3 right-3 bottom-3">
-            <div className="font-[family-name:var(--font-display)] font-extrabold text-white text-[clamp(18px,6cqw,40px)] leading-[0.95] tracking-tight">
+            <div
+              data-slot="headline"
+              style={{ ...slotStyle(positions, "headline"), ...slotTextStyle(positions, "headline") }}
+              className="font-[family-name:var(--font-display)] font-extrabold text-white text-[clamp(18px,6cqw,40px)] leading-[0.95] tracking-tight touch-none"
+            >
               {c.headline}
             </div>
-            <div className="mt-1 inline-block bg-hot text-white font-[family-name:var(--font-mono)] uppercase tracking-wider text-[clamp(9px,2.5cqw,12px)] px-2 py-1">
+            <div
+              data-slot="kicker"
+              style={{ ...slotStyle(positions, "kicker"), ...slotTextStyle(positions, "kicker") }}
+              className="mt-1 inline-block bg-hot text-white font-[family-name:var(--font-mono)] uppercase tracking-wider text-[clamp(9px,2.5cqw,12px)] px-2 py-1 touch-none"
+            >
               {c.kicker}
             </div>
           </div>
@@ -229,10 +249,18 @@ export default function MemePreview({
               <PhotoLayer src={photo} />
             </div>
             <div className="mx-3 mb-3 rounded-2xl rounded-tl-md bg-[#1a1a1c] p-3 border border-white/10">
-              <div className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-acid mb-1">
+              <div
+                data-slot="name"
+                className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-acid mb-1 touch-none"
+                style={{ ...slotStyle(positions, "name"), ...slotTextStyle(positions, "name") }}
+              >
                 {c.name}
               </div>
-              <div className="font-[family-name:var(--font-body)] text-white text-[clamp(12px,3.4cqw,18px)] leading-snug">
+              <div
+                data-slot="message"
+                className="font-[family-name:var(--font-body)] text-white text-[clamp(12px,3.4cqw,18px)] leading-snug touch-none"
+                style={{ ...slotStyle(positions, "message"), ...slotTextStyle(positions, "message") }}
+              >
                 {c.message}
               </div>
             </div>
@@ -259,7 +287,9 @@ export default function MemePreview({
             </div>
             <div className="flex-1 bg-acid text-ink flex items-center justify-center p-3">
               <div
-                className={`font-[family-name:var(--font-display)] font-extrabold uppercase tracking-tight leading-[0.95] break-words text-center ${sizeClass}`}
+                data-slot="banner"
+                className={`font-[family-name:var(--font-display)] font-extrabold uppercase tracking-tight leading-[0.95] break-words text-center touch-none ${sizeClass}`}
+                style={{ ...slotStyle(positions, "banner"), ...slotTextStyle(positions, "banner") }}
               >
                 {c.banner}
               </div>

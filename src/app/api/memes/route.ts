@@ -21,6 +21,7 @@ const Body = z.object({
         dy: z.number().optional(),
         scale: z.number().optional(),
         color: z.string().optional(),
+        textCase: z.enum(["upper", "lower", "title", "none"]).optional(),
       }),
     )
     .optional(),

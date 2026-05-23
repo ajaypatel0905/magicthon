@@ -236,7 +236,8 @@ export default function MemeEditor({
     }
   }
 
-  const draggable = templateId === "top-bottom-impact" || templateId === "bottom-only";
+  // All templates with data-slot wrappers support drag.
+  const draggable = true;
 
   function onPointerDown(e: React.PointerEvent) {
     const target = (e.target as HTMLElement).closest<HTMLElement>("[data-slot]");
@@ -508,7 +509,25 @@ export default function MemeEditor({
                     </label>
                   </div>
 
-                  {/* X-axis nudge buttons (in addition to drag) */}
+                  {/* Case toggle */}
+                  <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
+                    {(["upper", "title", "lower"] as const).map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateAdjust(slot.key, { textCase: c })}
+                        title={`case: ${c}`}
+                        className={`px-2.5 py-1.5 text-[11px] font-bold hover:bg-ink-2 ${
+                          (adj.textCase ?? "none") === c
+                            ? "bg-acid text-ink"
+                            : ""
+                        }`}
+                      >
+                        {c === "upper" ? "AA" : c === "lower" ? "aa" : "Aa"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* X-axis nudge */}
                   <div className="flex items-center rounded-full border border-[var(--line)] overflow-hidden">
                     <button
                       onClick={() =>
@@ -533,6 +552,15 @@ export default function MemeEditor({
                       →
                     </button>
                   </div>
+
+                  {/* Clear text */}
+                  <button
+                    onClick={() => setCaptions((c) => ({ ...c, [slot.key]: "" }))}
+                    title="delete caption"
+                    className="ml-auto rounded-full border border-[var(--line)] hover:border-hot/60 hover:text-hot px-3 py-1.5 text-[11px] font-[family-name:var(--font-mono)] uppercase tracking-widest"
+                  >
+                    × clear
+                  </button>
                 </div>
               </div>
             );
